@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "BinaryData.h"
 
 OneDial::OneDial()
     : AudioProcessor(BusesProperties()
@@ -11,6 +12,21 @@ OneDial::OneDial()
     inputGainParam = apvts.getRawParameterValue("inputGain");
     outputGainParam = apvts.getRawParameterValue("outputGain");
     bypassParam = apvts.getRawParameterValue("bypass");
+
+    // Load NAM profiles from binary resources
+    zoneBlender.loadZoneProfile(0, BinaryData::clean_nam,  BinaryData::clean_namSize);
+    zoneBlender.loadZoneProfile(1, BinaryData::warm_nam,   BinaryData::warm_namSize);
+    zoneBlender.loadZoneProfile(2, BinaryData::crunch_nam, BinaryData::crunch_namSize);
+    zoneBlender.loadZoneProfile(3, BinaryData::drive_nam,  BinaryData::drive_namSize);
+    zoneBlender.loadZoneProfile(4, BinaryData::lead_nam,   BinaryData::lead_namSize);
+
+    // Load cabinet IR (same Mesa OS 4x12 for all zones)
+    const double defaultSampleRate = 44100.0;
+    zoneBlender.loadZoneIR(0, BinaryData::clean_wav,  BinaryData::clean_wavSize,  defaultSampleRate);
+    zoneBlender.loadZoneIR(1, BinaryData::warm_wav,   BinaryData::warm_wavSize,   defaultSampleRate);
+    zoneBlender.loadZoneIR(2, BinaryData::crunch_wav, BinaryData::crunch_wavSize, defaultSampleRate);
+    zoneBlender.loadZoneIR(3, BinaryData::drive_wav,  BinaryData::drive_wavSize,  defaultSampleRate);
+    zoneBlender.loadZoneIR(4, BinaryData::lead_wav,   BinaryData::lead_wavSize,   defaultSampleRate);
 }
 
 OneDial::~OneDial() = default;

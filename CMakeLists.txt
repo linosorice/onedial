@@ -55,6 +55,8 @@ juce_add_plugin(OneDial
     COPY_PLUGIN_AFTER_BUILD TRUE
     AU_MAIN_TYPE "kAudioUnitType_Effect"
     DESCRIPTION "Neural Amp Modeler with One Dial"
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/resources/icon/onedial_icon.png"
+    ICON_SMALL "${CMAKE_CURRENT_SOURCE_DIR}/resources/icon/onedial_icon.png"
 )
 
 # --- Source Files ---
