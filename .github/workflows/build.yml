@@ -1,0 +1,25 @@
+name: Build AU Plugin
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCPM_SOURCE_CACHE=$HOME/.cache/CPM
+
+      - name: Build
+        run: cmake --build build --config Release -j$(sysctl -n hw.ncpu)
+
+      - name: Upload AU Plugin
+        uses: actions/upload-artifact@v4
+        with:
+          name: OneDial-AU
+          path: build/OneDial_artefacts/Release/AU/OneDial.component
