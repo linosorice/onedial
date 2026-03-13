@@ -5,27 +5,29 @@
 
 class OneDial;
 
-// Custom look and feel for analog 70s aesthetic
-class AnalogLookAndFeel : public juce::LookAndFeel_V4
+// Vintage analog look and feel inspired by classic 60s/70s studio gear
+class VintageLookAndFeel : public juce::LookAndFeel_V4
 {
 public:
-    AnalogLookAndFeel();
+    VintageLookAndFeel();
     void drawRotarySlider(juce::Graphics&, int x, int y, int width, int height,
                           float sliderPos, float rotaryStartAngle, float rotaryEndAngle,
                           juce::Slider&) override;
+    void drawToggleButton(juce::Graphics&, juce::ToggleButton&,
+                          bool shouldDrawButtonAsHighlighted,
+                          bool shouldDrawButtonAsDown) override;
 };
 
-// Decorative VU meter component
-class VUMeter : public juce::Component, private juce::Timer
+// Zone indicator strip showing active tonal zone
+class ZoneStrip : public juce::Component
 {
 public:
-    VUMeter(OneDial& processor);
+    ZoneStrip();
     void paint(juce::Graphics&) override;
+    void setDialValue(float value);
 
 private:
-    void timerCallback() override;
-    OneDial& processor;
-    float smoothedLevel = 0.0f;
+    float dialValue = 5.0f;
 };
 
 class OneDialEditor : public juce::AudioProcessorEditor
@@ -39,10 +41,13 @@ public:
 
 private:
     OneDial& processor;
-    AnalogLookAndFeel analogLnf;
+    VintageLookAndFeel vintageLnf;
 
     // Main dial
     juce::Slider dialKnob;
+
+    // Zone display
+    ZoneStrip zoneStrip;
     juce::Label zoneLabel;
 
     // Secondary controls
@@ -53,9 +58,6 @@ private:
 
     // Bypass
     juce::ToggleButton bypassButton{"BYPASS"};
-
-    // VU Meter
-    VUMeter vuMeter;
 
     // APVTS attachments
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> dialAttachment;
