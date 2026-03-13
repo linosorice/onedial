@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OneDial — One Knob. Five Zones. Every Tone You've Been Chasing.</title>
+<meta name="description" content="OneDial: a free macOS Audio Unit plugin with five neural amp zones controlled by a single knob. From pristine cleans to searing leads — just turn and play.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-deep: #0a0908;
+  --bg-dark: #121110;
+  --bg-panel: #1a1816;
+  --bg-raised: #231f1c;
+  --amber: #d4a028;
+  --amber-light: #e8b84a;
+  --amber-glow: #d4a02840;
+  --amber-dim: #8b6914;
+  --orange-warm: #c45e20;
+  --cream: #e8dcc8;
+  --cream-dim: #a89878;
+  --text-primary: #e8dcc8;
+  --text-secondary: #a89878;
+  --text-muted: #6b5d4a;
+  --red-vu: #c43030;
+  --green-vu: #4a8c3a;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'DM Sans', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Noise grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: var(--amber-dim); border-radius: 3px; }
+
+/* ═══════════ NAV ═══════════ */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 1.25rem 3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  backdrop-filter: blur(20px);
+  background: #0a090880;
+  border-bottom: 1px solid #ffffff06;
+  transition: all 0.4s ease;
+}
+nav.scrolled { background: #0a0908cc; border-bottom-color: #d4a02815; }
+.nav-logo {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--amber);
+  letter-spacing: 0.05em;
+  text-decoration: none;
+}
+.nav-links { display: flex; gap: 2.5rem; list-style: none; }
+.nav-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color 0.3s;
+}
+.nav-links a:hover { color: var(--amber); }
+.nav-links a:not(.nav-cta) {
+  position: relative;
+}
+.nav-links a:not(.nav-cta)::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--amber);
+  transition: width 0.3s ease;
+}
+.nav-links a:not(.nav-cta):hover::after { width: 100%; }
+.nav-cta {
+  background: var(--amber);
+  color: var(--bg-deep) !important;
+  padding: 0.55rem 1.4rem;
+  border-radius: 4px;
+  font-weight: 600 !important;
+  transition: background 0.3s, transform 0.2s !important;
+}
+.nav-cta:hover { background: var(--amber-light); transform: translateY(-1px); }
+
+/* Hamburger menu */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  z-index: 1001;
+}
+.nav-hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--cream);
+  border-radius: 1px;
+  transition: all 0.3s ease;
+}
+.nav-hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+.nav-mobile-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 9, 8, 0.95);
+  backdrop-filter: blur(30px);
+  z-index: 999;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.nav-mobile-overlay.open {
+  display: flex;
+  opacity: 1;
+}
+.nav-mobile-overlay a {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--cream);
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: color 0.3s;
+}
+.nav-mobile-overlay a:hover { color: var(--amber); }
+.nav-mobile-overlay .nav-cta {
+  font-size: 1rem;
+  margin-top: 1rem;
+  background: var(--amber);
+  color: var(--bg-deep);
+  padding: 0.75rem 2rem;
+  border-radius: 5px;
+}
+
+/* ═══════════ HERO ═══════════ */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 8rem 2rem 4rem;
+  overflow: hidden;
+}
+
+/* Radial glow behind dial */
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, #d4a02812 0%, #d4a02806 30%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Horizontal rule decorations */
+.hero-rule {
+  width: 120px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--amber-dim), transparent);
+  margin: 1.5rem auto;
+}
+
+.hero-pretitle {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--amber-dim);
+  margin-bottom: 1rem;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.2s ease forwards;
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 10vw, 9rem);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  background: linear-gradient(180deg, var(--cream) 20%, var(--amber) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 4px 30px #d4a02830);
+  opacity: 0;
+  animation: fadeUp 0.8s 0.4s ease forwards;
+}
+
+.hero-tagline {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+  color: var(--text-secondary);
+  margin-top: 1.5rem;
+  font-weight: 400;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.6s ease forwards;
+}
+
+/* ─── Interactive Dial ─── */
+.dial-container {
+  position: relative;
+  margin-top: 3.5rem;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.8s ease forwards;
+}
+
+.dial-svg {
+  width: 280px;
+  height: 280px;
+  cursor: grab;
+  user-select: none;
+  filter: drop-shadow(0 0 40px #d4a02820);
+  transition: filter 0.3s;
+}
+.dial-svg:active { cursor: grabbing; }
+.dial-svg:hover { filter: drop-shadow(0 0 60px #d4a02835); }
+
+.dial-zone-label {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  letter-spacing: 0.25em;
+  color: var(--amber);
+  text-align: center;
+  margin-top: 1rem;
+  text-transform: uppercase;
+  min-height: 1.4em;
+  transition: color 0.3s;
+}
+
+.dial-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+.hero-scroll-hint {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0;
+  animation: fadeUp 0.8s 1.2s ease forwards;
+}
+.hero-scroll-hint span {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.scroll-line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(to bottom, var(--amber-dim), transparent);
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+
+/* ═══════════ SECTIONS ═══════════ */
+section {
+  padding: 7rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-divider {
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--amber-dim), var(--amber), var(--amber-dim));
+  border-radius: 1px;
+  margin: 0 auto 4rem;
+  opacity: 0.5;
+}
+
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--amber-dim);
+  margin-bottom: 0.75rem;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 1.5rem;
+  color: var(--cream);
+}
+
+.section-desc {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  max-width: 600px;
+}
+
+/* ═══════════ ZONES ═══════════ */
+.zones { padding-top: 4rem; }
+.zones-header { text-align: center; margin-bottom: 4rem; }
+.zones-header .section-desc { margin: 0 auto; }
+
+.zones-track {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3rem;
+}
+
+/* Connecting gradient line */
+.zones-track::before {
+  content: '';
+  position: absolute;
+  top: 40px;
+  left: 40px;
+  right: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, #4a8c3a, #7aaa3a, #d4a028, #c45e20, #c43030);
+  border-radius: 1px;
+  opacity: 0.5;
+}
+
+.zone-card {
+  flex: 1;
+  text-align: center;
+  position: relative;
+  padding: 1.5rem 0.75rem;
+  padding-top: 0.5rem;
+  border-radius: 10px;
+  background: transparent;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease, background 0.4s ease, box-shadow 0.4s ease;
+}
+.zone-card.visible { opacity: 1; transform: translateY(0); }
+.zone-card:hover {
+  background: var(--bg-panel);
+  box-shadow: 0 8px 40px #0004;
+}
+
+.zone-pip {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  margin: 0 auto 1.5rem;
+  position: relative;
+  z-index: 1;
+  border: 2px solid var(--bg-deep);
+  box-shadow: 0 0 15px var(--zone-color, var(--amber));
+  background: var(--zone-color, var(--amber));
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.zone-card:hover .zone-pip {
+  transform: scale(1.3);
+  box-shadow: 0 0 25px var(--zone-color, var(--amber));
+}
+
+.zone-name {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+  color: var(--cream);
+}
+
+.zone-range {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.15em;
+  margin-bottom: 1rem;
+}
+
+.zone-desc {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  padding: 0 0.5rem;
+}
+
+/* ═══════════ HOW IT WORKS ═══════════ */
+.how-it-works { overflow: hidden; }
+.signal-chain {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-top: 3rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.chain-node {
+  background: var(--bg-panel);
+  border: 1px solid #ffffff0a;
+  border-radius: 8px;
+  padding: 1.8rem 1.5rem;
+  text-align: center;
+  min-width: 160px;
+  position: relative;
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: all 0.5s ease, border-color 0.3s, box-shadow 0.3s;
+}
+.chain-node.visible { opacity: 1; transform: translateX(0); }
+.chain-node:hover {
+  border-color: var(--amber-glow);
+  box-shadow: 0 4px 30px #d4a02815, inset 0 1px 0 #d4a02810;
+  transform: translateX(0) translateY(-3px);
+}
+
+.chain-arrow {
+  font-size: 1.5rem;
+  color: var(--amber-dim);
+  padding: 0 0.75rem;
+  opacity: 0;
+  transition: opacity 0.5s 0.2s;
+}
+.chain-arrow.visible { opacity: 1; }
+
+.chain-icon {
+  font-size: 1.8rem;
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+.chain-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 0.35rem;
+}
+
+.chain-detail {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ═══════════ AUDIO DEMOS ═══════════ */
+.demos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+
+.demo-card {
+  background: var(--bg-panel);
+  border: 1px solid #ffffff08;
+  border-radius: 10px;
+  padding: 1.75rem;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.5s ease;
+}
+.demo-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--amber-dim), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.demo-card:hover::before { opacity: 1; }
+.demo-card.visible { opacity: 1; transform: translateY(0); }
+.demo-card:hover {
+  border-color: #d4a02825;
+  box-shadow: 0 8px 40px #0005;
+}
+
+.demo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.demo-zone-tag {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--amber);
+  background: #d4a02815;
+  padding: 0.3rem 0.75rem;
+  border-radius: 3px;
+}
+
+.demo-duration {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* Waveform visualization */
+.waveform-container {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0.5rem 0;
+}
+
+.waveform-bar {
+  flex: 1;
+  background: var(--amber-dim);
+  border-radius: 1px;
+  min-width: 2px;
+  transition: background 0.2s;
+}
+
+.demo-card:hover .waveform-bar { background: var(--amber); }
+
+.demo-play-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+  background: none;
+  border: 1px solid var(--amber-dim);
+  color: var(--amber);
+  padding: 0.55rem 1.2rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s;
+  width: 100%;
+  justify-content: center;
+}
+.demo-play-btn:hover {
+  background: #d4a02815;
+  border-color: var(--amber);
+  box-shadow: 0 0 20px #d4a02815;
+}
+.demo-play-btn:active {
+  transform: scale(0.98);
+}
+
+.demo-play-icon {
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 5px 0 5px 9px;
+  border-color: transparent transparent transparent var(--amber);
+}
+
+/* ═══════════ SPECS ═══════════ */
+.specs {
+  background: var(--bg-dark);
+  border-top: 1px solid #ffffff06;
+  border-bottom: 1px solid #ffffff06;
+  max-width: 100%;
+  padding: 7rem 2rem;
+}
+.specs-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.specs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2.5rem;
+  margin-top: 3rem;
+}
+
+.spec-item {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.5s ease;
+  padding: 1.5rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+.spec-item.visible { opacity: 1; transform: translateY(0); }
+.spec-item:hover {
+  background: var(--bg-raised);
+  border-color: #ffffff08;
+  box-shadow: 0 4px 20px #0003;
+}
+
+.spec-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: #d4a02810;
+  border: 1px solid #d4a02820;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  transition: box-shadow 0.3s, background 0.3s;
+}
+.spec-item:hover .spec-icon {
+  box-shadow: 0 0 20px #d4a02825;
+  background: #d4a02818;
+}
+
+.spec-name {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--cream);
+  margin-bottom: 0.4rem;
+}
+
+.spec-value {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.spec-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: var(--amber-dim);
+  background: #d4a02810;
+  padding: 0.2rem 0.6rem;
+  border-radius: 3px;
+  margin-top: 0.5rem;
+}
+
+/* ═══════════ CTA ═══════════ */
+.cta {
+  text-align: center;
+  padding: 8rem 2rem;
+  position: relative;
+}
+
+.cta::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 700px;
+  height: 500px;
+  background: radial-gradient(ellipse, #d4a02818 0%, #d4a02808 40%, transparent 70%);
+  pointer-events: none;
+  animation: glowPulse 4s ease-in-out infinite;
+}
+
+.cta .section-title {
+  font-size: clamp(2.5rem, 6vw, 4rem);
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 2.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  background: var(--amber);
+  color: var(--bg-deep);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0.9rem 2.5rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: all 0.3s;
+  text-decoration: none;
+}
+.btn-primary:hover {
+  background: var(--amber-light);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px #d4a02830;
+}
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px #d4a02820;
+}
+.btn-primary:focus-visible, .btn-secondary:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--cream);
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 1rem;
+  padding: 0.9rem 2.5rem;
+  border: 1px solid var(--amber-dim);
+  border-radius: 5px;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: all 0.3s;
+  text-decoration: none;
+}
+.btn-secondary:hover {
+  border-color: var(--amber);
+  background: #d4a02810;
+}
+
+.cta-note {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 1.25rem;
+}
+
+/* ═══════════ VU METER DECORATION ═══════════ */
+.vu-decoration {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+  margin: 2rem auto 0;
+  max-width: 300px;
+}
+
+.vu-bar {
+  width: 6px;
+  border-radius: 2px;
+  animation: vuBounce var(--vu-speed, 1.2s) ease-in-out infinite alternate;
+  animation-delay: var(--vu-delay, 0s);
+}
+
+/* ═══════════ FOOTER ═══════════ */
+footer {
+  border-top: 1px solid #ffffff06;
+  padding: 3rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.footer-brand {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--amber);
+  transition: text-shadow 0.3s;
+}
+.footer-brand:hover {
+  text-shadow: 0 0 20px #d4a02840;
+}
+
+.footer-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+}
+.footer-links a {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+.footer-links a:hover { color: var(--amber); }
+
+.footer-copy {
+  width: 100%;
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #ffffff06;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ═══════════ ANIMATIONS ═══════════ */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(25px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scrollPulse {
+  0%, 100% { opacity: 0.3; transform: scaleY(1); }
+  50% { opacity: 0.8; transform: scaleY(1.2); }
+}
+
+@keyframes vuBounce {
+  0% { transform: scaleY(0.3); }
+  100% { transform: scaleY(1); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+/* ═══════════ RESPONSIVE ═══════════ */
+@media (max-width: 900px) {
+  nav { padding: 1rem 1.5rem; }
+  .nav-links { gap: 1.5rem; }
+
+  .zones-track {
+    flex-direction: column;
+    gap: 2rem;
+    align-items: center;
+  }
+  .zones-track::before { display: none; }
+  .zone-card { max-width: 340px; }
+
+  .signal-chain { flex-direction: column; gap: 0.5rem; }
+  .chain-arrow { transform: rotate(90deg); padding: 0.3rem 0; }
+}
+
+@media (max-width: 600px) {
+  nav { padding: 0.8rem 1rem; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+  section { padding: 5rem 1.25rem; }
+  .hero { padding: 6rem 1.25rem 4rem; }
+  .dial-svg { width: 220px; height: 220px; }
+  .specs { padding: 5rem 1.25rem; }
+  .specs-grid { grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+}
+
+@media (max-width: 400px) {
+  .specs-grid { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html { scroll-behavior: auto; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ NAV ═══════════ -->
+<nav id="nav">
+  <a href="#" class="nav-logo">OneDial</a>
+  <ul class="nav-links">
+    <li><a href="#zones">Zones</a></li>
+    <li><a href="#how-it-works">How It Works</a></li>
+    <li><a href="#demos">Demos</a></li>
+    <li><a href="#specs">Specs</a></li>
+    <li><a href="#download" class="nav-cta">Download</a></li>
+  </ul>
+  <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<div class="nav-mobile-overlay" id="mobileNav">
+  <a href="#zones" class="mobile-nav-link">Zones</a>
+  <a href="#how-it-works" class="mobile-nav-link">How It Works</a>
+  <a href="#demos" class="mobile-nav-link">Demos</a>
+  <a href="#specs" class="mobile-nav-link">Specs</a>
+  <a href="#download" class="nav-cta mobile-nav-link">Download</a>
+</div>
+
+<!-- ═══════════ HERO ═══════════ -->
+<section class="hero">
+  <span class="hero-pretitle">Neural Amp Modeling — Simplified</span>
+  <h1 class="hero-title">OneDial</h1>
+  <div class="hero-rule"></div>
+  <p class="hero-tagline">One knob. Five zones. Every tone you've been chasing.</p>
+
+  <div class="dial-container">
+    <svg class="dial-svg" id="dial" viewBox="0 0 280 280">
+      <defs>
+        <radialGradient id="dialFace" cx="50%" cy="45%" r="50%">
+          <stop offset="0%" stop-color="#3a3530"/>
+          <stop offset="100%" stop-color="#1a1816"/>
+        </radialGradient>
+        <radialGradient id="dialHighlight" cx="40%" cy="35%" r="45%">
+          <stop offset="0%" stop-color="#ffffff08"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient>
+        <filter id="dialShadow">
+          <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.5"/>
+        </filter>
+        <filter id="knobShadow">
+          <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.4"/>
+        </filter>
+      </defs>
+
+      <!-- Outer ring / bezel -->
+      <circle cx="140" cy="140" r="130" fill="none" stroke="#2a2520" stroke-width="3"/>
+      <circle cx="140" cy="140" r="128" fill="none" stroke="#0a090860" stroke-width="1"/>
+
+      <!-- Zone arc indicators -->
+      <g id="zoneArcs" opacity="0.6">
+        <!-- Arcs drawn by JS -->
+      </g>
+
+      <!-- Tick marks -->
+      <g id="ticks" stroke-linecap="round"></g>
+
+      <!-- Zone labels around dial -->
+      <g font-family="'JetBrains Mono', monospace" font-size="8" letter-spacing="0.15em" fill-opacity="0.5">
+        <text x="40" y="230" fill="#4a8c3a" text-anchor="middle">CLEAN</text>
+        <text x="28" y="130" fill="#7aaa3a" text-anchor="middle">WARM</text>
+        <text x="140" y="28" fill="#d4a028" text-anchor="middle">CRUNCH</text>
+        <text x="252" y="130" fill="#c45e20" text-anchor="middle">DRIVE</text>
+        <text x="240" y="230" fill="#c43030" text-anchor="middle">LEAD</text>
+      </g>
+
+      <!-- Knob body -->
+      <circle cx="140" cy="140" r="70" fill="url(#dialFace)" filter="url(#dialShadow)"/>
+      <circle cx="140" cy="140" r="70" fill="url(#dialHighlight)"/>
+      <circle cx="140" cy="140" r="70" fill="none" stroke="#ffffff0a" stroke-width="1"/>
+
+      <!-- Knob grip ridges -->
+      <g id="gripLines" opacity="0.15"></g>
+
+      <!-- Pointer indicator -->
+      <g id="pointer" filter="url(#knobShadow)">
+        <line x1="140" y1="140" x2="140" y2="78" stroke="var(--amber)" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="140" cy="82" r="3.5" fill="var(--amber)"/>
+      </g>
+
+      <!-- Center cap -->
+      <circle cx="140" cy="140" r="12" fill="#2a2520"/>
+      <circle cx="140" cy="140" r="10" fill="#1a1816"/>
+      <circle cx="140" cy="140" r="4" fill="#d4a02830"/>
+    </svg>
+    <div class="dial-zone-label" id="dialZoneLabel">CRUNCH</div>
+    <div class="dial-hint">Drag to explore zones</div>
+  </div>
+
+  <div class="hero-scroll-hint">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════ ZONES ═══════════ -->
+<section class="zones" id="zones">
+  <div class="zones-header">
+    <span class="section-label">01 / Tonal Zones</span>
+    <h2 class="section-title">From glass to fire in a single sweep</h2>
+    <p class="section-desc">Five neural amp zones that morph seamlessly as you turn. No menu diving. No preset surfing. No decision fatigue. Just turn the knob and play.</p>
+  </div>
+
+  <div class="zones-track">
+    <div class="zone-card" data-delay="0">
+      <div class="zone-pip" style="--zone-color: #4a8c3a;"></div>
+      <div class="zone-name">Clean</div>
+      <div class="zone-range">0 — 2</div>
+      <div class="zone-desc">Fender-style glass. Every chord rings with bell-like clarity — perfect for fingerpicking, jazz voicings, and ambient swells.</div>
+    </div>
+    <div class="zone-card" data-delay="100">
+      <div class="zone-pip" style="--zone-color: #7aaa3a;"></div>
+      <div class="zone-name">Warm</div>
+      <div class="zone-range">2 — 4</div>
+      <div class="zone-desc">That sweet spot where tubes start to breathe. Roll back your volume for clean, dig in for grit. The tone your blues heroes live in.</div>
+    </div>
+    <div class="zone-card" data-delay="200">
+      <div class="zone-pip" style="--zone-color: #d4a028;"></div>
+      <div class="zone-name">Crunch</div>
+      <div class="zone-range">4 — 6</div>
+      <div class="zone-desc">Classic rock backbone. The sound of cranked Marshalls and Saturday night gigs. Touch-sensitive and alive under your fingers.</div>
+    </div>
+    <div class="zone-card" data-delay="300">
+      <div class="zone-pip" style="--zone-color: #c45e20;"></div>
+      <div class="zone-name">Drive</div>
+      <div class="zone-range">6 — 8</div>
+      <div class="zone-desc">Tight, aggressive, modern. Palm mutes that punch, power chords that roar. Built for drop tunings and heavy riffing.</div>
+    </div>
+    <div class="zone-card" data-delay="400">
+      <div class="zone-pip" style="--zone-color: #c43030;"></div>
+      <div class="zone-name">Lead</div>
+      <div class="zone-range">8 — 10</div>
+      <div class="zone-desc">Wide-open, endless sustain. Notes bloom into feedback, pinch harmonics leap out. This is where solos write themselves.</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════ HOW IT WORKS ═══════════ -->
+<section class="how-it-works" id="how-it-works">
+  <span class="section-label">02 / Signal Chain</span>
+  <h2 class="section-title">Dead simple under the hood</h2>
+  <p class="section-desc">Your signal hits two adjacent NAM zones running in parallel — blended in real time by the dial position. The transitions are so smooth you'll forget there are five separate amps in there.</p>
+
+  <div class="signal-chain">
+    <div class="chain-node">
+      <span class="chain-icon">🎸</span>
+      <div class="chain-label">Input</div>
+      <div class="chain-detail">Plug in and play</div>
+    </div>
+    <span class="chain-arrow">→</span>
+    <div class="chain-node">
+      <span class="chain-icon">🔇</span>
+      <div class="chain-label">Noise Gate</div>
+      <div class="chain-detail">Silence between the notes</div>
+    </div>
+    <span class="chain-arrow">→</span>
+    <div class="chain-node" style="border-color: #d4a02820;">
+      <span class="chain-icon">🧠</span>
+      <div class="chain-label">NAM Zones</div>
+      <div class="chain-detail">Two neural amps blending<br>in real time</div>
+    </div>
+    <span class="chain-arrow">→</span>
+    <div class="chain-node">
+      <span class="chain-icon">📦</span>
+      <div class="chain-label">IR Cabinet</div>
+      <div class="chain-detail">Matched cab for each zone</div>
+    </div>
+    <span class="chain-arrow">→</span>
+    <div class="chain-node">
+      <span class="chain-icon">🔊</span>
+      <div class="chain-label">Output</div>
+      <div class="chain-detail">Stage-ready output</div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ═══════════ DEMOS ═══════════ -->
+<section id="demos">
+  <span class="section-label">03 / Listen</span>
+  <h2 class="section-title">Don't take our word for it</h2>
+  <p class="section-desc">Audio demos dropping soon. Five zones, five characters — from studio-polished cleans to face-melting gain.</p>
+
+  <div class="demos-grid">
+    <div class="demo-card" data-delay="0">
+      <div class="demo-header">
+        <span class="demo-zone-tag">Clean — Dial 1.0</span>
+        <span class="demo-duration">0:32</span>
+      </div>
+      <div class="waveform-container" data-zone="clean"></div>
+      <button class="demo-play-btn"><span class="demo-play-icon"></span> Coming Soon</button>
+    </div>
+    <div class="demo-card" data-delay="120">
+      <div class="demo-header">
+        <span class="demo-zone-tag">Crunch — Dial 5.0</span>
+        <span class="demo-duration">0:28</span>
+      </div>
+      <div class="waveform-container" data-zone="crunch"></div>
+      <button class="demo-play-btn"><span class="demo-play-icon"></span> Coming Soon</button>
+    </div>
+    <div class="demo-card" data-delay="240">
+      <div class="demo-header">
+        <span class="demo-zone-tag">Lead — Dial 9.5</span>
+        <span class="demo-duration">0:35</span>
+      </div>
+      <div class="waveform-container" data-zone="lead"></div>
+      <button class="demo-play-btn"><span class="demo-play-icon"></span> Coming Soon</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SPECS ═══════════ -->
+<div class="specs" id="specs">
+  <div class="specs-inner">
+    <span class="section-label">04 / Technical</span>
+    <h2 class="section-title">Engineered for tone nerds</h2>
+    <p class="section-desc">Real neural networks. Real cabinet IRs. No compromises on what matters.</p>
+
+    <div class="specs-grid">
+      <div class="spec-item" data-delay="0">
+        <div class="spec-icon">🍎</div>
+        <div class="spec-name">macOS Native</div>
+        <div class="spec-value">Built for macOS 12 Monterey and later. Native Apple Silicon support.</div>
+        <span class="spec-tag">Audio Unit</span>
+      </div>
+      <div class="spec-item" data-delay="80">
+        <div class="spec-icon">🧠</div>
+        <div class="spec-name">Neural Amp Modeling</div>
+        <div class="spec-value">Powered by NeuralAmpModelerCore. Five trained neural networks capture real amplifier behavior.</div>
+        <span class="spec-tag">NAM Engine</span>
+      </div>
+      <div class="spec-item" data-delay="160">
+        <div class="spec-icon">🎛️</div>
+        <div class="spec-name">JUCE 8 Framework</div>
+        <div class="spec-value">Professional audio plugin framework. Works in Logic Pro, GarageBand, and any AU host.</div>
+        <span class="spec-tag">C++17</span>
+      </div>
+      <div class="spec-item" data-delay="240">
+        <div class="spec-icon">📐</div>
+        <div class="spec-name">Zero Latency Blending</div>
+        <div class="spec-value">Parallel dual-zone processing with real-time crossfading. No artifacts, no glitches.</div>
+        <span class="spec-tag">Float32</span>
+      </div>
+      <div class="spec-item" data-delay="320">
+        <div class="spec-icon">🔊</div>
+        <div class="spec-name">IR Convolution</div>
+        <div class="spec-value">Each zone includes a matched cabinet impulse response for authentic speaker character.</div>
+        <span class="spec-tag">Per-Zone IR</span>
+      </div>
+      <div class="spec-item" data-delay="400">
+        <div class="spec-icon">📦</div>
+        <div class="spec-name">All-In-One</div>
+        <div class="spec-value">All profiles and IRs are bundled. No downloads, no file management. Install and play.</div>
+        <span class="spec-tag">Self-Contained</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CTA ═══════════ -->
+<section class="cta" id="download">
+  <span class="section-label">05 / Get It</span>
+  <h2 class="section-title">Stop tweaking.<br>Start playing.</h2>
+  <p class="section-desc" style="margin: 0 auto;">Free. Open source. No signup, no trial, no strings. Just download and plug in.</p>
+
+  <div class="cta-buttons">
+    <a href="#" class="btn-primary">Download for macOS</a>
+    <a href="#" class="btn-secondary">View on GitHub</a>
+  </div>
+  <p class="cta-note">macOS 12+ &middot; Audio Unit &middot; Logic Pro, GarageBand &amp; any AU host &middot; Apple Silicon native</p>
+
+  <!-- VU meter decoration -->
+  <div class="vu-decoration" id="vuDecoration"></div>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">OneDial</div>
+    <ul class="footer-links">
+      <li><a href="#zones">Zones</a></li>
+      <li><a href="#how-it-works">How It Works</a></li>
+      <li><a href="#specs">Specs</a></li>
+      <li><a href="#">GitHub</a></li>
+    </ul>
+  </div>
+  <div class="footer-copy">&copy; 2026 OneDial. Built with JUCE &amp; NeuralAmpModelerCore. Open source under MIT License.</div>
+</footer>
+
+<script>
+// ═══════════ DIAL INTERACTION ═══════════
+(() => {
+  const dial = document.getElementById('dial');
+  const pointer = document.getElementById('pointer');
+  const label = document.getElementById('dialZoneLabel');
+  const ticksGroup = document.getElementById('ticks');
+  const gripGroup = document.getElementById('gripLines');
+
+  const MIN_ANGLE = -135;
+  const MAX_ANGLE = 135;
+  let currentAngle = 0; // starts at center (crunch)
+  let isDragging = false;
+  let startY, startAngle;
+
+  const zones = [
+    { name: 'CLEAN',  color: '#4a8c3a', range: [-135, -81] },
+    { name: 'WARM',   color: '#7aaa3a', range: [-81, -27] },
+    { name: 'CRUNCH', color: '#d4a028', range: [-27, 27] },
+    { name: 'DRIVE',  color: '#c45e20', range: [27, 81] },
+    { name: 'LEAD',   color: '#c43030', range: [81, 135] },
+  ];
+
+  // Draw tick marks
+  for (let i = 0; i <= 20; i++) {
+    const angle = MIN_ANGLE + (i / 20) * (MAX_ANGLE - MIN_ANGLE);
+    const rad = (angle - 90) * Math.PI / 180;
+    const isMajor = i % 4 === 0;
+    const r1 = isMajor ? 108 : 112;
+    const r2 = 120;
+    const x1 = 140 + r1 * Math.cos(rad);
+    const y1 = 140 + r1 * Math.sin(rad);
+    const x2 = 140 + r2 * Math.cos(rad);
+    const y2 = 140 + r2 * Math.sin(rad);
+    const tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    tick.setAttribute('x1', x1);
+    tick.setAttribute('y1', y1);
+    tick.setAttribute('x2', x2);
+    tick.setAttribute('y2', y2);
+    tick.setAttribute('stroke', isMajor ? '#a89878' : '#6b5d4a');
+    tick.setAttribute('stroke-width', isMajor ? '2' : '1');
+    ticksGroup.appendChild(tick);
+  }
+
+  // Draw knob grip lines
+  for (let i = 0; i < 24; i++) {
+    const angle = (i / 24) * 360;
+    const rad = angle * Math.PI / 180;
+    const x1 = 140 + 58 * Math.cos(rad);
+    const y1 = 140 + 58 * Math.sin(rad);
+    const x2 = 140 + 67 * Math.cos(rad);
+    const y2 = 140 + 67 * Math.sin(rad);
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x1);
+    line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2);
+    line.setAttribute('y2', y2);
+    line.setAttribute('stroke', '#e8dcc8');
+    line.setAttribute('stroke-width', '1');
+    gripGroup.appendChild(line);
+  }
+
+  function updateDial(angle) {
+    currentAngle = Math.max(MIN_ANGLE, Math.min(MAX_ANGLE, angle));
+    pointer.setAttribute('transform', `rotate(${currentAngle}, 140, 140)`);
+
+    // Determine zone
+    for (const zone of zones) {
+      if (currentAngle >= zone.range[0] && currentAngle <= zone.range[1]) {
+        label.textContent = zone.name;
+        label.style.color = zone.color;
+        break;
+      }
+    }
+  }
+
+  dial.addEventListener('pointerdown', (e) => {
+    isDragging = true;
+    startY = e.clientY;
+    startAngle = currentAngle;
+    dial.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+
+  window.addEventListener('pointermove', (e) => {
+    if (!isDragging) return;
+    const deltaY = startY - e.clientY;
+    updateDial(startAngle + deltaY * 1.2);
+  });
+
+  window.addEventListener('pointerup', () => { isDragging = false; });
+
+  // Initialize
+  updateDial(0);
+})();
+
+// ═══════════ WAVEFORM GENERATION ═══════════
+document.querySelectorAll('.waveform-container').forEach(container => {
+  const zone = container.dataset.zone;
+  const barCount = 80;
+  const configs = {
+    clean:  { baseH: 15, variance: 12, color: '#4a8c3a' },
+    crunch: { baseH: 25, variance: 20, color: '#d4a028' },
+    lead:   { baseH: 32, variance: 25, color: '#c43030' },
+  };
+  const cfg = configs[zone] || configs.crunch;
+
+  for (let i = 0; i < barCount; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'waveform-bar';
+    const t = i / barCount;
+    // Create natural waveform shape
+    const envelope = Math.sin(t * Math.PI) * 0.7 + 0.3;
+    const noise = (Math.sin(i * 4.7) * 0.5 + Math.sin(i * 7.3) * 0.3 + Math.sin(i * 13.1) * 0.2) * 0.5 + 0.5;
+    const h = (cfg.baseH + cfg.variance * noise) * envelope;
+    bar.style.height = Math.max(2, h) + 'px';
+    bar.style.background = cfg.color + '80';
+    container.appendChild(bar);
+  }
+});
+
+// ═══════════ VU METER BARS ═══════════
+(() => {
+  const vuContainer = document.getElementById('vuDecoration');
+  const barCount = 40;
+  for (let i = 0; i < barCount; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'vu-bar';
+    const t = i / barCount;
+    const h = 8 + Math.sin(t * Math.PI) * 18;
+    bar.style.height = h + 'px';
+    const isRed = t > 0.75;
+    bar.style.background = isRed ? '#c43030' : (t > 0.6 ? '#d4a028' : '#4a8c3a');
+    bar.style.setProperty('--vu-speed', (0.8 + Math.random() * 0.8) + 's');
+    bar.style.setProperty('--vu-delay', (Math.random() * 0.5) + 's');
+    vuContainer.appendChild(bar);
+  }
+})();
+
+// ═══════════ SCROLL ANIMATIONS ═══════════
+(() => {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const delay = entry.target.dataset.delay || 0;
+        setTimeout(() => entry.target.classList.add('visible'), parseInt(delay));
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.zone-card, .chain-node, .chain-arrow, .demo-card, .spec-item').forEach(el => {
+    observer.observe(el);
+  });
+})();
+
+// ═══════════ MOBILE NAV ═══════════
+(() => {
+  const hamburger = document.getElementById('hamburger');
+  const mobileNav = document.getElementById('mobileNav');
+  hamburger.addEventListener('click', () => {
+    hamburger.classList.toggle('open');
+    mobileNav.classList.toggle('open');
+    document.body.style.overflow = mobileNav.classList.contains('open') ? 'hidden' : '';
+  });
+  mobileNav.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      hamburger.classList.remove('open');
+      mobileNav.classList.remove('open');
+      document.body.style.overflow = '';
+    });
+  });
+})();
+
+// ═══════════ NAV SCROLL ═══════════
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 50);
+}, { passive: true });
+</script>
+
+</body>
+</html>
