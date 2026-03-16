@@ -1,0 +1,2979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OneDial — One Knob. Five Zones. Infinite Tone.</title>
+<meta name="description" content="OneDial: a free macOS Audio Unit plugin with five neural amp zones controlled by a single knob.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════
+   RESET & CSS VARIABLES
+   ═══════════════════════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  /* Dark theme — unified naming */
+  --v-black: #0a0908;
+  --v-dark: #121110;
+  --v-panel: #1a1816;
+  --v-raised: #2a2520;
+
+  /* Marshall gold */
+  --m-gold: #c5a44e;
+  --m-gold-bright: #dbb95c;
+  --m-gold-dim: #8a7535;
+
+  /* Zone colors */
+  --z-clean: #4a8c3a;
+  --z-warm: #7aaa3a;
+  --z-crunch: #d4a028;
+  --z-drive: #c45e20;
+  --z-lead: #c43030;
+
+  /* Text */
+  --v-cream: #e8dcc8;
+  --v-cream-dim: #a89878;
+  --v-muted: #6b5d4a;
+
+  /* Fonts */
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Menlo', monospace;
+
+  /* Easing */
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Dynamic zone color (set by JS) */
+  --active-zone-color: var(--z-crunch);
+  --active-zone-glow: rgba(212, 160, 40, 0.25);
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 4rem;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.7;
+  color: var(--v-cream);
+  background: var(--v-black);
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 256px;
+}
+
+/* Tolex texture */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23t)'/%3E%3C/svg%3E");
+  background-size: 200px;
+}
+
+::selection {
+  background: var(--m-gold);
+  color: var(--v-black);
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--v-black); }
+::-webkit-scrollbar-thumb { background: var(--v-muted); border-radius: 2px; }
+
+
+/* ═══════════════════════════════════════════════════════
+   NAV — FIXED GLASSMORPHISM
+   ═══════════════════════════════════════════════════════ */
+.site-nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(1.5rem, 4vw, 3rem);
+  height: 56px;
+  background: rgba(10, 9, 8, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(197, 164, 78, 0);
+  transition: background 0.4s, border-color 0.4s;
+}
+
+.site-nav.scrolled {
+  background: rgba(10, 9, 8, 0.88);
+  border-bottom-color: rgba(197, 164, 78, 0.08);
+}
+
+.nav-logo {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: var(--m-gold);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  list-style: none;
+}
+
+.nav-links a {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--v-cream-dim);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.nav-links a:hover {
+  color: var(--m-gold);
+}
+
+.nav-cta {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--v-black);
+  background: linear-gradient(135deg, var(--m-gold), var(--m-gold-bright));
+  border: none;
+  padding: 0.45rem 1.1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.3s, box-shadow 0.3s;
+  box-shadow: 0 2px 12px rgba(197, 164, 78, 0.2);
+}
+
+.nav-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(197, 164, 78, 0.35);
+}
+
+/* Hamburger */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.nav-hamburger span {
+  display: block;
+  width: 20px;
+  height: 1.5px;
+  background: var(--v-cream-dim);
+  border-radius: 1px;
+  transition: transform 0.3s, opacity 0.3s;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   SCROLL REVEAL
+   ═══════════════════════════════════════════════════════ */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.8s var(--ease-expo), transform 0.8s var(--ease-expo);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   SECTION DIVIDERS — GOLD PIPING
+   ═══════════════════════════════════════════════════════ */
+.section-divider {
+  position: relative;
+  z-index: 1;
+  height: 3px;
+  max-width: 100%;
+  overflow: hidden;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(197, 164, 78, 0.06) 15%,
+    rgba(197, 164, 78, 0.12) 50%,
+    rgba(197, 164, 78, 0.06) 85%,
+    transparent
+  );
+}
+.section-divider::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -30%;
+  width: 30%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(197, 164, 78, 0.6), transparent);
+  animation: dividerSweep 4s ease-in-out infinite;
+}
+@keyframes dividerSweep {
+  0% { left: -30%; }
+  100% { left: 130%; }
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   SHARED SECTION STYLES
+   ═══════════════════════════════════════════════════════ */
+.section {
+  position: relative;
+  padding: clamp(5rem, 10vw, 8rem) clamp(1.5rem, 5vw, 4rem);
+  overflow: hidden;
+}
+
+.section-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.section-number {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--v-muted);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  justify-content: center;
+}
+
+.section-number::before,
+.section-number::after {
+  content: '';
+  width: 40px;
+  height: 1px;
+  background: var(--m-gold-dim);
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.05;
+  color: var(--v-cream);
+  margin-bottom: 1.5rem;
+}
+
+.section-title em {
+  color: var(--m-gold);
+  font-style: italic;
+}
+
+.section-desc {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.9;
+  color: var(--v-cream-dim);
+  max-width: 550px;
+  font-weight: 300;
+  margin: 0 auto;
+}
+
+.section-subtitle {
+  font-family: var(--font-mono);
+  font-size: clamp(0.8rem, 1.2vw, 0.95rem);
+  color: var(--v-cream-dim);
+  max-width: 640px;
+  line-height: 1.7;
+  margin-bottom: 3.5rem;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   HERO — SPLIT LAYOUT: COPY + AMP WIDGET
+   ═══════════════════════════════════════════════════════ */
+.hero {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  align-items: center;
+  gap: clamp(2rem, 5vw, 5rem);
+  padding: 7rem clamp(2rem, 5vw, 5rem) 3rem;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+/* ── Left column: Copy ── */
+.hero-copy {
+  opacity: 0;
+  animation: fadeUp 1s 0.3s var(--ease-expo) forwards;
+}
+
+.hero-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--m-gold);
+  border: 1px solid rgba(197, 164, 78, 0.25);
+  padding: 0.4rem 1rem;
+  margin-bottom: 2rem;
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(4rem, 8vw, 7rem);
+  font-weight: 400;
+  font-style: italic;
+  color: var(--m-gold-bright);
+  letter-spacing: 0.02em;
+  line-height: 0.95;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 0 60px rgba(197, 164, 78, 0.1);
+}
+
+.hero-subtitle {
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--v-cream-dim);
+  max-width: 480px;
+  margin-bottom: 2.5rem;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.hero-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--v-black);
+  background: linear-gradient(135deg, var(--m-gold), var(--m-gold-bright));
+  border: none;
+  padding: 0.9rem 2rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.3s, box-shadow 0.3s;
+  box-shadow: 0 4px 20px rgba(197, 164, 78, 0.25);
+}
+.hero-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 40px rgba(197, 164, 78, 0.4);
+}
+.hero-btn-primary svg { width: 16px; height: 16px; fill: currentColor; }
+
+.hero-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--v-cream-dim);
+  background: transparent;
+  border: 1.5px solid var(--v-muted);
+  padding: 0.9rem 2rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.3s, color 0.3s, background 0.3s, transform 0.3s;
+}
+.hero-btn-secondary:hover {
+  border-color: var(--m-gold-dim);
+  color: var(--m-gold);
+  background: rgba(197, 164, 78, 0.05);
+  transform: translateY(-2px);
+}
+.hero-btn-secondary svg { width: 16px; height: 16px; fill: currentColor; }
+
+.hero-note {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--v-muted);
+  letter-spacing: 0.05em;
+}
+
+/* ── Right column: Amp Widget ── */
+.hero-widget {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  animation: ampReveal 1.2s 0.5s var(--ease-expo) forwards;
+}
+
+.amp-body {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(197, 164, 78, 0.06);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 1px rgba(197, 164, 78, 0.1);
+}
+
+/* Logo bar */
+.amp-logo-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(180deg, rgba(18, 16, 13, 0.95) 0%, rgba(14, 13, 10, 0.98) 100%);
+  position: relative;
+  z-index: 3;
+}
+
+.amp-brand {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--m-gold-bright);
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 20px rgba(197, 164, 78, 0.15);
+  line-height: 1;
+}
+
+.amp-model {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--m-gold-dim);
+  opacity: 0.5;
+  text-align: right;
+}
+
+.amp-model-line {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.42rem;
+  opacity: 0.4;
+  letter-spacing: 0.15em;
+  color: var(--v-cream-dim);
+}
+
+/* Gold piping */
+.amp-piping {
+  height: 2px;
+  background: linear-gradient(90deg,
+    rgba(197, 164, 78, 0.03),
+    rgba(197, 164, 78, 0.12) 15%,
+    rgba(197, 164, 78, 0.2) 50%,
+    rgba(197, 164, 78, 0.12) 85%,
+    rgba(197, 164, 78, 0.03)
+  );
+  position: relative;
+  z-index: 3;
+  box-shadow: 0 0 6px rgba(197, 164, 78, 0.04);
+}
+
+.amp-piping.bright {
+  background: linear-gradient(90deg,
+    rgba(197, 164, 78, 0.03),
+    rgba(197, 164, 78, 0.15) 15%,
+    rgba(197, 164, 78, 0.28) 50%,
+    rgba(197, 164, 78, 0.15) 85%,
+    rgba(197, 164, 78, 0.03)
+  );
+  box-shadow: 0 0 10px rgba(197, 164, 78, 0.06);
+}
+
+/* Grille cloth */
+.amp-grille {
+  position: relative;
+  min-height: 180px;
+  background: #0c0b09;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.amp-grille-cloth {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(197, 164, 78, 0.1) 0.6px, transparent 0.6px);
+  background-size: 4px 4px;
+  z-index: 1;
+}
+
+.amp-grille-glow {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%; height: 100%;
+  background: radial-gradient(ellipse at center 60%, var(--active-zone-glow) 0%, transparent 65%);
+  z-index: 2;
+  opacity: 0.6;
+  transition: background 0.8s;
+  pointer-events: none;
+}
+
+.amp-grille-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  opacity: 0.35;
+}
+
+/* Hidden h1 for SEO */
+.hero-title-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+}
+
+/* Control strip */
+.amp-control-strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.2rem 1.5rem;
+  background: linear-gradient(180deg, #16140f 0%, #111010 50%, #0e0d0a 100%);
+  position: relative;
+  z-index: 4;
+}
+
+.dial-wrapper {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dial-knob-container {
+  position: relative;
+}
+
+.dial-svg {
+  width: clamp(140px, 16vw, 190px);
+  height: clamp(140px, 16vw, 190px);
+  cursor: grab;
+  user-select: none;
+  filter: drop-shadow(0 0 30px rgba(197, 164, 78, 0.08));
+  transition: filter 0.8s;
+}
+.dial-svg:active { cursor: grabbing; }
+
+/* Dial readout */
+.dial-readout {
+  text-align: center;
+  margin-top: 0.4rem;
+}
+
+.dial-zone-label {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 500;
+  font-style: italic;
+  letter-spacing: 0.08em;
+  min-height: 1.4em;
+  transition: color 0.3s;
+  color: var(--active-zone-color);
+}
+
+.dial-value-display {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 400;
+  color: var(--v-cream-dim);
+  letter-spacing: 0.1em;
+  margin-top: 0.1rem;
+}
+
+/* Bottom bar */
+.amp-bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.5rem;
+  background: linear-gradient(180deg, #0e0d0a 0%, #0a0908 100%);
+  position: relative;
+  z-index: 3;
+}
+
+.amp-tagline {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  font-weight: 400;
+  color: var(--v-muted);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.amp-tagline-sep {
+  color: var(--m-gold-dim);
+  opacity: 0.3;
+  margin: 0 0.3rem;
+}
+
+/* Drag hint below amp */
+.hero-drag-hint {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--v-muted);
+  letter-spacing: 0.12em;
+  text-align: center;
+  margin-top: 1rem;
+  opacity: 0;
+  animation: fadeUp 0.8s 2s ease forwards;
+}
+
+.hero-drag-hint span {
+  display: inline-block;
+  animation: hintBounce 2s ease-in-out infinite;
+}
+
+@keyframes hintBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(3px); }
+}
+
+/* Scroll indicator */
+.hero-scroll {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  padding-top: 1rem;
+  opacity: 0;
+  animation: fadeUp 1s 2.5s ease forwards;
+}
+
+.scroll-indicator {
+  width: 22px; height: 36px;
+  border: 1.5px solid var(--v-muted);
+  border-radius: 11px;
+  position: relative;
+}
+
+.scroll-dot {
+  width: 3px; height: 7px;
+  background: var(--m-gold);
+  border-radius: 2px;
+  position: absolute;
+  top: 7px; left: 50%;
+  transform: translateX(-50%);
+  animation: scrollDot 2s ease-in-out infinite;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   01 — ZONES — FULL-BLEED IMMERSIVE CARDS
+   ═══════════════════════════════════════════════════════ */
+.zones-section {
+  position: relative;
+  z-index: 1;
+  padding: 8rem 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.zones-header {
+  text-align: center;
+  margin-bottom: 5rem;
+  padding: 0 2rem;
+}
+
+/* Zone track */
+.zones-track {
+  display: flex;
+  gap: 0;
+  width: 100%;
+}
+
+.zone-card {
+  flex: 1;
+  min-height: 540px;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 2.5rem 2rem;
+  transition: flex 0.7s var(--ease-expo);
+}
+.zone-card:hover { flex: 1.8; }
+
+.zone-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* Grille cloth overlay on zone cards */
+.zone-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(197, 164, 78, 0.08) 0.5px, transparent 0.5px);
+  background-size: 5px 5px;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.zone-card[data-zone="clean"] .zone-bg {
+  background: linear-gradient(180deg, #0a120a 0%, #0d1a0d 50%, #0a0908 100%);
+}
+.zone-card[data-zone="warm"] .zone-bg {
+  background: linear-gradient(180deg, #12110a 0%, #1a1808 50%, #0a0908 100%);
+}
+.zone-card[data-zone="crunch"] .zone-bg {
+  background: linear-gradient(180deg, #1a150a 0%, #1f180c 50%, #0a0908 100%);
+}
+.zone-card[data-zone="drive"] .zone-bg {
+  background: linear-gradient(180deg, #1a0f08 0%, #1f1008 50%, #0a0908 100%);
+}
+.zone-card[data-zone="lead"] .zone-bg {
+  background: linear-gradient(180deg, #1a0808 0%, #1f0a0a 50%, #0a0908 100%);
+}
+
+/* Oscilloscope canvas per zone */
+.zone-oscilloscope {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0.15;
+  transition: opacity 0.6s;
+}
+.zone-card:hover .zone-oscilloscope { opacity: 0.5; }
+
+/* Vertical glow line on left edge */
+.zone-card::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 2px;
+  background: var(--zone-color);
+  opacity: 0.3;
+  z-index: 3;
+  transition: width 0.4s, opacity 0.4s;
+}
+.zone-card:hover::before { width: 3px; opacity: 0.8; }
+
+/* Bottom gradient overlay */
+.zone-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 70%;
+  background: linear-gradient(to top, rgba(10, 9, 8, 0.95), transparent);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.zone-content {
+  position: relative;
+  z-index: 3;
+}
+
+/* Pilot LED */
+.zone-pilot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--zone-color);
+  box-shadow: 0 0 4px var(--zone-color), 0 0 10px var(--zone-color);
+  margin-bottom: 0.75rem;
+  animation: pilotPulse 3s ease-in-out infinite;
+  opacity: 0.6;
+  transition: opacity 0.4s;
+}
+.zone-card:hover .zone-pilot { opacity: 1; }
+
+/* Large faded zone number */
+.zone-number {
+  font-family: var(--font-mono);
+  font-size: 4rem;
+  font-weight: 700;
+  color: var(--zone-color);
+  opacity: 0.08;
+  line-height: 1;
+  margin-bottom: 1rem;
+  transition: opacity 0.5s, transform 0.5s;
+}
+.zone-card:hover .zone-number { opacity: 0.2; transform: translateY(-5px); }
+
+/* Zone name */
+.zone-name {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--v-cream);
+  margin-bottom: 0.25rem;
+  transition: text-shadow 0.5s;
+}
+.zone-card:hover .zone-name { text-shadow: 0 0 30px var(--zone-color); }
+
+/* Dial range */
+.zone-range {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--zone-color);
+  letter-spacing: 0.25em;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* Description (appears on hover) */
+.zone-desc {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: var(--v-cream-dim);
+  max-width: 280px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s 0.1s, transform 0.5s 0.1s;
+}
+.zone-card:hover .zone-desc { opacity: 1; transform: translateY(0); }
+
+/* Spectrum bars (animate on hover) */
+.zone-spectrum {
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+  height: 40px;
+  margin-top: 1rem;
+  opacity: 0;
+  transition: opacity 0.5s 0.15s;
+}
+.zone-card:hover .zone-spectrum { opacity: 1; }
+
+.zone-spectrum-bar {
+  width: 3px;
+  border-radius: 1px 1px 0 0;
+  background: var(--zone-color);
+  opacity: 0.6;
+  animation: spectrumPulse var(--bar-speed) ease-in-out infinite alternate;
+  animation-delay: var(--bar-delay);
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   02 — DEMOS SECTION
+   ═══════════════════════════════════════════════════════ */
+.demos-section {
+  background: var(--v-black);
+  border-top: 1px solid rgba(197, 164, 78, 0.08);
+}
+
+.demos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.demo-card {
+  background: var(--v-dark);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.4s ease;
+}
+
+.demo-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--card-accent);
+  z-index: 2;
+}
+
+.demo-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px color-mix(in srgb, var(--card-accent) 15%, transparent);
+}
+
+.demo-card-body {
+  padding: 2rem 1.5rem 1.5rem;
+}
+
+/* Vinyl record */
+.vinyl-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2.5rem 1.5rem 1rem;
+  position: relative;
+}
+
+.vinyl-svg {
+  width: 160px;
+  height: 160px;
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.5));
+}
+
+.vinyl-svg .vinyl-body {
+  fill: #111;
+}
+
+.vinyl-svg .vinyl-groove {
+  fill: none;
+  stroke: rgba(255,255,255,0.04);
+  stroke-width: 0.5;
+}
+
+.vinyl-svg .vinyl-sheen {
+  fill: url(#vinylSheen);
+  opacity: 0.12;
+}
+
+.vinyl-svg .vinyl-label {
+  fill: var(--card-accent);
+}
+
+.vinyl-svg .vinyl-label-inner {
+  fill: color-mix(in srgb, var(--card-accent) 70%, #000);
+}
+
+.vinyl-svg .vinyl-hole {
+  fill: var(--v-dark);
+}
+
+.demo-card:hover .vinyl-svg {
+  animation: vinylSpin 3s linear infinite;
+}
+
+@keyframes vinylSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Zone tag */
+.demo-zone-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--card-accent);
+  margin-bottom: 0.75rem;
+}
+
+.demo-zone-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--card-accent);
+  animation: pulseDot 2s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--card-accent); }
+  50% { opacity: 0.6; box-shadow: 0 0 8px 3px color-mix(in srgb, var(--card-accent) 40%, transparent); }
+}
+
+.demo-dial-value {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--v-muted);
+  letter-spacing: 0.1em;
+  margin-bottom: 0.75rem;
+}
+
+.demo-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--v-cream);
+  margin-bottom: 0.5rem;
+}
+
+.demo-desc {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--v-cream-dim);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.demo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--v-cream-dim);
+  background: var(--v-panel);
+  border: 1px solid rgba(197, 164, 78, 0.1);
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: default;
+  transition: border-color 0.3s, color 0.3s, background 0.3s;
+}
+
+.demo-card:hover .demo-btn {
+  border-color: var(--card-accent);
+  color: var(--card-accent);
+  background: color-mix(in srgb, var(--card-accent) 6%, var(--v-panel));
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   03 — ARCHITECTURE — SIGNAL CHAIN (DARK THEME)
+   ═══════════════════════════════════════════════════════ */
+.architecture {
+  position: relative;
+  z-index: 1;
+  padding: 8rem 2rem;
+  overflow: hidden;
+}
+
+/* Subtle grid pattern */
+.architecture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(197, 164, 78, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(197, 164, 78, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+.architecture-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.arch-header {
+  text-align: center;
+  margin-bottom: 5rem;
+}
+
+.arch-header .section-number::before,
+.arch-header .section-number::after {
+  background: rgba(197, 164, 78, 0.2);
+}
+
+/* Signal chain flow */
+.signal-chain {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  flex-wrap: wrap;
+  margin-bottom: 4rem;
+}
+
+.signal-node {
+  padding: 1.2rem 1.8rem;
+  border: 1px solid rgba(197, 164, 78, 0.1);
+  background: rgba(197, 164, 78, 0.03);
+  text-align: center;
+  position: relative;
+  transition: all 0.4s var(--ease-expo);
+}
+
+.signal-node:hover {
+  border-color: rgba(197, 164, 78, 0.4);
+  background: rgba(197, 164, 78, 0.08);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 30px rgba(197, 164, 78, 0.1), 0 0 1px rgba(197, 164, 78, 0.4);
+}
+
+.signal-node.core-node {
+  border-color: rgba(197, 164, 78, 0.25);
+  background: rgba(197, 164, 78, 0.06);
+}
+.signal-node.core-node:hover {
+  box-shadow: 0 6px 40px rgba(197, 164, 78, 0.15), 0 0 1px var(--m-gold-bright);
+}
+
+.signal-node-label {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--m-gold-dim);
+  margin-bottom: 0.35rem;
+}
+
+.signal-node-name {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--v-cream);
+}
+
+.signal-arrow {
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  color: var(--m-gold-dim);
+  padding: 0 0.8rem;
+  opacity: 0.4;
+}
+
+/* Parallel blend detail */
+.blend-detail {
+  max-width: 750px;
+  margin: 0 auto;
+  border: 1px solid rgba(197, 164, 78, 0.08);
+  padding: 2.5rem 3rem;
+  position: relative;
+  background: rgba(10, 9, 8, 0.5);
+}
+
+.blend-detail::before {
+  content: 'PARALLEL BLEND ENGINE';
+  position: absolute;
+  top: -0.55rem;
+  left: 1.5rem;
+  background: var(--v-black);
+  padding: 0 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.3em;
+  color: var(--m-gold);
+}
+
+.blend-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.blend-channel {
+  flex: 1;
+  max-width: 250px;
+  border: 1px solid rgba(197, 164, 78, 0.12);
+  padding: 1.2rem;
+  text-align: center;
+  background: rgba(197, 164, 78, 0.02);
+  transition: border-color 0.3s, background 0.3s;
+}
+.blend-channel:hover {
+  border-color: rgba(197, 164, 78, 0.3);
+  background: rgba(197, 164, 78, 0.04);
+}
+
+.blend-channel-label {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  color: var(--m-gold-dim);
+  margin-bottom: 0.5rem;
+}
+
+.blend-channel-value {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--m-gold-bright);
+}
+
+.blend-operator {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--m-gold-dim);
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.blend-alpha {
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.blend-alpha-label {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  color: var(--m-gold-dim);
+  margin-bottom: 0.3rem;
+}
+
+.blend-alpha-symbol {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-style: italic;
+  color: var(--m-gold);
+}
+
+.blend-explanation {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 300;
+  color: var(--v-cream-dim);
+  line-height: 1.9;
+  text-align: center;
+}
+
+.blend-explanation code {
+  color: var(--m-gold);
+  background: rgba(197, 164, 78, 0.1);
+  padding: 0.1rem 0.4rem;
+  font-size: 0.68rem;
+  border-radius: 2px;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   04 — CTA SECTION
+   ═══════════════════════════════════════════════════════ */
+.cta-section {
+  background: var(--v-black);
+  border-top: 1px solid rgba(197, 164, 78, 0.08);
+  text-align: center;
+  min-height: 90vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.cta-section .section-title {
+  font-size: clamp(3rem, 6vw, 6rem);
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1.5rem;
+}
+
+.cta-section .section-subtitle {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  max-width: 560px;
+  margin-bottom: 3rem;
+}
+
+.cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin-bottom: 2.5rem;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--v-black);
+  background: linear-gradient(135deg, var(--m-gold), var(--m-gold-bright));
+  border: none;
+  padding: 1rem 2.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.3s, box-shadow 0.3s;
+  box-shadow: 0 4px 20px rgba(197, 164, 78, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 40px rgba(197, 164, 78, 0.45);
+}
+
+.btn-primary svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--v-cream-dim);
+  background: transparent;
+  border: 1.5px solid var(--v-muted);
+  padding: 1rem 2.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 0.3s, color 0.3s, background 0.3s, transform 0.3s;
+}
+
+.btn-secondary:hover {
+  border-color: var(--m-gold-dim);
+  color: var(--m-gold);
+  background: rgba(197, 164, 78, 0.05);
+  transform: translateY(-2px);
+}
+
+.btn-secondary svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.cta-note {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--v-muted);
+  letter-spacing: 0.05em;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* Floating orbs */
+.cta-orbs {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cta-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.12;
+}
+
+.cta-orb--gold {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, var(--m-gold) 0%, transparent 70%);
+  top: 10%;
+  left: -5%;
+  animation: orbFloat1 12s ease-in-out infinite;
+}
+
+.cta-orb--cyan {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, #00d4ff 0%, transparent 70%);
+  top: 60%;
+  right: -3%;
+  animation: orbFloat2 15s ease-in-out infinite;
+}
+
+.cta-orb--magenta {
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, #ff00aa 0%, transparent 70%);
+  bottom: 5%;
+  left: 30%;
+  animation: orbFloat3 10s ease-in-out infinite;
+}
+
+@keyframes orbFloat1 {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(40px, -30px); }
+  66% { transform: translate(-20px, 20px); }
+}
+
+@keyframes orbFloat2 {
+  0%, 100% { transform: translate(0, 0); }
+  40% { transform: translate(-30px, 25px); }
+  70% { transform: translate(20px, -15px); }
+}
+
+@keyframes orbFloat3 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(35px, -25px); }
+}
+
+/* VU meter decoration */
+.cta-vu {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  height: 50px;
+  z-index: 0;
+  opacity: 0.15;
+}
+
+.cta-vu-bar {
+  width: 4px;
+  border-radius: 2px 2px 0 0;
+  background: linear-gradient(to top, var(--m-gold-dim), var(--m-gold));
+  animation: vuBounce var(--vu-speed, 1.2s) ease-in-out infinite alternate;
+  animation-delay: var(--vu-delay, 0s);
+}
+
+@keyframes vuBounce {
+  0% { height: 6px; }
+  100% { height: var(--vu-height, 36px); }
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   05 — BUILD SECTION
+   ═══════════════════════════════════════════════════════ */
+.build-section {
+  background: var(--v-panel);
+  border-top: 1px solid rgba(197, 164, 78, 0.08);
+}
+
+.build-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+/* Terminal */
+.terminal {
+  background: var(--v-dark);
+  border-radius: 10px;
+  border: 1px solid rgba(197, 164, 78, 0.08);
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+}
+
+.terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 16px;
+  background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid rgba(197, 164, 78, 0.06);
+}
+
+.terminal-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.terminal-dot:nth-child(1) { background: #ff5f57; }
+.terminal-dot:nth-child(2) { background: #febc2e; }
+.terminal-dot:nth-child(3) { background: #28c840; }
+
+.terminal-bar-title {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--v-muted);
+  margin-left: 8px;
+  letter-spacing: 0.05em;
+}
+
+.terminal-body {
+  padding: 1.25rem 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.9;
+  overflow-x: auto;
+}
+
+.terminal-body .t-comment {
+  color: var(--v-muted);
+}
+
+.terminal-body .t-prompt {
+  color: var(--m-gold-dim);
+}
+
+.terminal-body .t-cmd {
+  color: var(--m-gold-bright);
+}
+
+.terminal-body .t-flag {
+  color: var(--v-cream-dim);
+}
+
+.terminal-body .t-path {
+  color: var(--v-cream);
+}
+
+/* Tech stack */
+.tech-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.tech-stack-title {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.3rem;
+  color: var(--v-cream);
+  margin-bottom: 1.5rem;
+}
+
+.tech-item {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 1.1rem 0;
+  border-bottom: 1px solid rgba(197, 164, 78, 0.08);
+}
+
+.tech-item:first-of-type {
+  border-top: 1px solid rgba(197, 164, 78, 0.08);
+}
+
+.tech-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--m-gold);
+  background: rgba(197, 164, 78, 0.1);
+  border: 1px solid rgba(197, 164, 78, 0.15);
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tech-desc {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--v-cream-dim);
+  line-height: 1.5;
+}
+
+/* GitHub CTA button */
+.build-cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 3.5rem;
+}
+
+.github-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--m-gold);
+  background: transparent;
+  border: 1.5px solid var(--m-gold-dim);
+  padding: 0.85rem 2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.35s, border-color 0.35s, color 0.35s, box-shadow 0.35s;
+}
+
+.github-btn:hover {
+  background: var(--m-gold);
+  border-color: var(--m-gold);
+  color: var(--v-black);
+  box-shadow: 0 0 30px rgba(197, 164, 78, 0.25);
+}
+
+.github-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  transition: fill 0.35s;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════════════ */
+.site-footer {
+  border-top: 1.5px solid var(--m-gold-dim);
+  background: var(--v-dark);
+  padding: 3rem clamp(1.5rem, 5vw, 4rem) 2rem;
+}
+
+.footer-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.footer-brand {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--m-gold);
+  text-decoration: none;
+}
+
+.footer-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+}
+
+.footer-links a {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--v-cream-dim);
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.footer-links a:hover {
+  color: var(--m-gold);
+}
+
+.footer-copy {
+  width: 100%;
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(197, 164, 78, 0.08);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--v-muted);
+  letter-spacing: 0.03em;
+  line-height: 1.8;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   KEYFRAMES
+   ═══════════════════════════════════════════════════════ */
+@keyframes ampReveal {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scrollDot {
+  0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(14px); }
+}
+
+@keyframes pilotPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes spectrumPulse {
+  0% { height: var(--bar-h-min, 4px); }
+  100% { height: var(--bar-h-max, 28px); }
+}
+
+@keyframes ringPulse {
+  0%, 100% { border-color: rgba(197, 164, 78, 0.06); }
+  50% { border-color: rgba(197, 164, 78, 0.14); }
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  /* Hero: stack vertically */
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 6rem 1.5rem 2rem;
+    gap: 2.5rem;
+    min-height: auto;
+  }
+  .hero-copy { text-align: center; }
+  .hero-title { font-size: clamp(3rem, 10vw, 5rem); }
+  .hero-subtitle { margin-left: auto; margin-right: auto; }
+  .hero-buttons { justify-content: center; }
+  .hero-note { text-align: center; }
+  .amp-body { max-width: 360px; margin: 0 auto; }
+  .hero-scroll { padding-top: 0.5rem; }
+
+  .zones-track {
+    flex-direction: column;
+  }
+  .zone-card {
+    min-height: 300px;
+    flex: none !important;
+  }
+  .zone-card:hover { flex: none !important; }
+  .zone-card::before { display: none; }
+  .zone-desc { opacity: 1; transform: none; }
+  .zone-spectrum { opacity: 0.6; }
+
+  .signal-chain {
+    flex-direction: column;
+    gap: 0;
+  }
+  .signal-arrow {
+    transform: rotate(90deg);
+    padding: 0.3rem 0;
+  }
+
+  .blend-visual {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .blend-detail {
+    padding: 2rem 1.5rem;
+  }
+
+  .demos-grid {
+    grid-template-columns: 1fr;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .build-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-inner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .footer-links {
+    justify-content: center;
+  }
+
+  /* Nav mobile */
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 56px;
+    left: 0; right: 0;
+    flex-direction: column;
+    background: rgba(10, 9, 8, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 1.5rem;
+    gap: 1.25rem;
+    border-bottom: 1px solid rgba(197, 164, 78, 0.08);
+  }
+
+  .nav-links.open {
+    display: flex;
+  }
+
+  .nav-hamburger {
+    display: flex;
+  }
+}
+
+@media (max-width: 600px) {
+  .hero { padding: 5.5rem 1.25rem 1.5rem; }
+  .hero-buttons { flex-direction: column; align-items: center; }
+  .hero-btn-primary, .hero-btn-secondary { width: 100%; max-width: 280px; justify-content: center; }
+  .amp-body { max-width: 300px; }
+  .amp-brand { font-size: 1.2rem; }
+  .dial-svg {
+    width: 120px !important;
+    height: 120px !important;
+  }
+  .section-title { font-size: 2rem; }
+  .amp-tagline { font-size: 0.5rem; }
+
+  .section {
+    padding: 4rem 1.25rem;
+  }
+
+  .cta-section .section-title {
+    font-size: clamp(2rem, 8vw, 3.5rem);
+  }
+
+  .cta-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    max-width: 300px;
+    justify-content: center;
+  }
+
+  .terminal-body {
+    font-size: 0.68rem;
+    padding: 1rem;
+  }
+
+  .vinyl-svg {
+    width: 130px;
+    height: 130px;
+  }
+
+  .footer-links {
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   PREFERS REDUCED MOTION
+   ═══════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html { scroll-behavior: auto; }
+  .reveal { opacity: 1; transform: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     NAV
+     ═══════════════════════════════════════════ -->
+<nav class="site-nav" id="siteNav">
+  <a href="#hero" class="nav-logo">OneDial</a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#zones">Zones</a></li>
+    <li><a href="#demos">Demos</a></li>
+    <li><a href="#architecture">Signal</a></li>
+    <li><a href="https://github.com/linoaleman/onedial" target="_blank" rel="noopener">GitHub</a></li>
+    <li><a href="https://github.com/linoaleman/onedial/releases" target="_blank" rel="noopener" class="nav-cta">Download</a></li>
+  </ul>
+  <button class="nav-hamburger" id="navHamburger" aria-label="Toggle menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+</nav>
+
+
+<!-- ═══════════════════════════════════════════
+     HERO — SPLIT: COPY + AMP WIDGET
+     ═══════════════════════════════════════════ -->
+<section class="hero" id="hero">
+  <h1 class="hero-title-hidden">OneDial — Neural Amp Modeling Plugin</h1>
+
+  <!-- Left: Copy -->
+  <div class="hero-copy">
+    <div class="hero-badge">Free &amp; Open Source &middot; macOS Audio Unit</div>
+    <div class="hero-title">OneDial</div>
+    <p class="hero-subtitle">Neural amp modeling. One knob. Five zones. From clean to lead in a single sweep.</p>
+    <div class="hero-buttons">
+      <a href="https://github.com/linoaleman/onedial/releases" target="_blank" rel="noopener" class="hero-btn-primary">
+        <svg viewBox="0 0 16 16"><path d="M8 12l-4.5-4.5 1.06-1.06L7.5 9.38V1h1v8.38l2.94-2.94 1.06 1.06L8 12zm-6 2h12v1H2v-1z"/></svg>
+        Download for macOS
+      </a>
+      <a href="https://github.com/linoaleman/onedial" target="_blank" rel="noopener" class="hero-btn-secondary">
+        <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+    <p class="hero-note">macOS 12+ &middot; Audio Unit &middot; Logic Pro, GarageBand &amp; any AU host</p>
+  </div>
+
+  <!-- Right: Amp Widget -->
+  <div class="hero-widget">
+    <div class="amp-body">
+      <!-- Logo bar -->
+      <div class="amp-logo-bar">
+        <div class="amp-brand">OneDial</div>
+        <div class="amp-model">
+          NAM Engine
+          <span class="amp-model-line">Neural Amp Modeler</span>
+        </div>
+      </div>
+
+      <!-- Gold piping -->
+      <div class="amp-piping"></div>
+
+      <!-- Grille cloth -->
+      <div class="amp-grille">
+        <div class="amp-grille-cloth"></div>
+        <div class="amp-grille-glow" id="grilleGlow"></div>
+        <canvas class="amp-grille-canvas" id="grilleCanvas"></canvas>
+      </div>
+
+      <!-- Gold piping -->
+      <div class="amp-piping bright"></div>
+
+      <!-- Control strip — ONLY the dial -->
+      <div class="amp-control-strip">
+        <div class="dial-wrapper">
+          <div class="dial-knob-container">
+            <svg class="dial-svg" id="dialSvg" viewBox="0 0 240 240">
+              <defs>
+                <filter id="knobShadow">
+                  <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="rgba(0,0,0,0.5)" />
+                </filter>
+                <linearGradient id="knobGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#2a2520" />
+                  <stop offset="50%" stop-color="#1a1816" />
+                  <stop offset="100%" stop-color="#121110" />
+                </linearGradient>
+                <linearGradient id="knobHighlight" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="rgba(232,220,200,0.08)" />
+                  <stop offset="100%" stop-color="rgba(0,0,0,0)" />
+                </linearGradient>
+              </defs>
+
+              <!-- Zone arc segments -->
+              <g id="dialZoneArcs"></g>
+
+              <!-- Tick marks -->
+              <g id="dialTicks"></g>
+
+              <!-- Outer chrome ring -->
+              <circle cx="120" cy="120" r="72" fill="none" stroke="rgba(197,164,78,0.12)" stroke-width="1" />
+
+              <!-- Knob body -->
+              <circle cx="120" cy="120" r="68" fill="url(#knobGrad)" filter="url(#knobShadow)" stroke="rgba(197,164,78,0.08)" stroke-width="0.5" />
+              <circle cx="120" cy="120" r="68" fill="url(#knobHighlight)" />
+
+              <!-- Grip lines -->
+              <g id="dialGripLines"></g>
+
+              <!-- Inner ring -->
+              <circle cx="120" cy="120" r="28" fill="none" stroke="rgba(197,164,78,0.06)" stroke-width="0.5" />
+
+              <!-- Pointer -->
+              <line id="dialPointer" x1="120" y1="120" x2="120" y2="52" stroke="var(--m-gold)" stroke-width="2.5" stroke-linecap="round" />
+
+              <!-- Center cap -->
+              <circle cx="120" cy="120" r="6" fill="#2a2520" stroke="rgba(197,164,78,0.15)" stroke-width="0.5" />
+              <circle cx="120" cy="120" r="2" fill="var(--m-gold)" opacity="0.6" />
+            </svg>
+          </div>
+
+          <div class="dial-readout">
+            <div class="dial-zone-label" id="dialZoneLabel">CRUNCH</div>
+            <div class="dial-value-display" id="dialValueDisplay">5.0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gold piping -->
+      <div class="amp-piping"></div>
+
+      <!-- Bottom bar with tagline -->
+      <div class="amp-bottom-bar">
+        <div class="amp-tagline">
+          One knob<span class="amp-tagline-sep">/</span>Five zones<span class="amp-tagline-sep">/</span>Infinite tone
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-drag-hint"><span>&#8597;</span> Drag the knob to explore</div>
+  </div>
+
+  <!-- Scroll indicator -->
+  <div class="hero-scroll">
+    <div class="scroll-indicator">
+      <div class="scroll-dot"></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════ SECTION DIVIDER ═══════════ -->
+<div class="section-divider"></div>
+
+
+<!-- ═══════════════════════════════════════════
+     01 — ZONES — IMMERSIVE CARDS
+     ═══════════════════════════════════════════ -->
+<section class="zones-section" id="zones">
+  <div class="zones-header reveal">
+    <div class="section-number">01 &mdash; Tonal Zones</div>
+    <h2 class="section-title">From glass to <em>fire</em> in a single sweep</h2>
+    <p class="section-desc">
+      Each zone loads a dedicated NAM profile and cabinet IR.<br>
+      Adjacent zones crossfade seamlessly as you turn the dial.
+    </p>
+  </div>
+
+  <div class="zones-track reveal">
+    <!-- CLEAN -->
+    <div class="zone-card" data-zone="clean" style="--zone-color: var(--z-clean);">
+      <div class="zone-bg"></div>
+      <canvas class="zone-oscilloscope" data-zone-osc="clean"></canvas>
+      <div class="zone-content">
+        <div class="zone-pilot"></div>
+        <div class="zone-number">01</div>
+        <div class="zone-name">Clean</div>
+        <div class="zone-range">Dial 0 &mdash; 2</div>
+        <div class="zone-desc">Crystal clear. Uncolored headroom for dynamics and articulation.</div>
+        <div class="zone-spectrum" id="specClean"></div>
+      </div>
+    </div>
+
+    <!-- WARM -->
+    <div class="zone-card" data-zone="warm" style="--zone-color: var(--z-warm);">
+      <div class="zone-bg"></div>
+      <canvas class="zone-oscilloscope" data-zone-osc="warm"></canvas>
+      <div class="zone-content">
+        <div class="zone-pilot"></div>
+        <div class="zone-number">02</div>
+        <div class="zone-name">Warm</div>
+        <div class="zone-range">Dial 2 &mdash; 4</div>
+        <div class="zone-desc">Soft breakup. Edge-of-breakup warmth with harmonic richness.</div>
+        <div class="zone-spectrum" id="specWarm"></div>
+      </div>
+    </div>
+
+    <!-- CRUNCH -->
+    <div class="zone-card" data-zone="crunch" style="--zone-color: var(--z-crunch);">
+      <div class="zone-bg"></div>
+      <canvas class="zone-oscilloscope" data-zone-osc="crunch"></canvas>
+      <div class="zone-content">
+        <div class="zone-pilot"></div>
+        <div class="zone-number">03</div>
+        <div class="zone-name">Crunch</div>
+        <div class="zone-range">Dial 4 &mdash; 6</div>
+        <div class="zone-desc">Classic midgain. Responsive crunch that cleans up with your volume knob.</div>
+        <div class="zone-spectrum" id="specCrunch"></div>
+      </div>
+    </div>
+
+    <!-- DRIVE -->
+    <div class="zone-card" data-zone="drive" style="--zone-color: var(--z-drive);">
+      <div class="zone-bg"></div>
+      <canvas class="zone-oscilloscope" data-zone-osc="drive"></canvas>
+      <div class="zone-content">
+        <div class="zone-pilot"></div>
+        <div class="zone-number">04</div>
+        <div class="zone-name">Drive</div>
+        <div class="zone-range">Dial 6 &mdash; 8</div>
+        <div class="zone-desc">Saturated gain. Thick, compressed drive with sustain for days.</div>
+        <div class="zone-spectrum" id="specDrive"></div>
+      </div>
+    </div>
+
+    <!-- LEAD -->
+    <div class="zone-card" data-zone="lead" style="--zone-color: var(--z-lead);">
+      <div class="zone-bg"></div>
+      <canvas class="zone-oscilloscope" data-zone-osc="lead"></canvas>
+      <div class="zone-content">
+        <div class="zone-pilot"></div>
+        <div class="zone-number">05</div>
+        <div class="zone-name">Lead</div>
+        <div class="zone-range">Dial 8 &mdash; 10</div>
+        <div class="zone-desc">Full saturation. Liquid high-gain for soaring leads and heavy riffs.</div>
+        <div class="zone-spectrum" id="specLead"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════ SECTION DIVIDER ═══════════ -->
+<div class="section-divider"></div>
+
+
+<!-- ═══════════════════════════════════════════
+     02 — DEMOS
+     ═══════════════════════════════════════════ -->
+<section class="section demos-section" id="demos">
+  <div class="section-inner">
+    <div class="section-number">02 &mdash; Listen</div>
+    <h2 class="section-title">Don't take our word for it</h2>
+    <p class="section-subtitle">Audio demos dropping soon. Five zones, five characters &mdash; from studio-polished cleans to face-melting gain.</p>
+
+    <div class="demos-grid">
+
+      <!-- Clean -->
+      <div class="demo-card" style="--card-accent: #4a8c3a;">
+        <div class="vinyl-wrap">
+          <svg class="vinyl-svg" viewBox="0 0 160 160">
+            <defs>
+              <radialGradient id="vinylSheen1" cx="35%" cy="35%" r="60%">
+                <stop offset="0%" stop-color="#fff" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <circle class="vinyl-body" cx="80" cy="80" r="76"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="72"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="67"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="62"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="57"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="52"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="47"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="42"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="37"/>
+            <circle cx="80" cy="80" r="76" fill="url(#vinylSheen1)" opacity="0.12"/>
+            <circle class="vinyl-label" cx="80" cy="80" r="26" fill="#4a8c3a"/>
+            <circle class="vinyl-label-inner" cx="80" cy="80" r="18" fill="#3a7030"/>
+            <circle class="vinyl-hole" cx="80" cy="80" r="4"/>
+          </svg>
+        </div>
+        <div class="demo-card-body">
+          <div class="demo-zone-tag"><span class="demo-zone-dot" style="background:#4a8c3a;"></span> Clean</div>
+          <div class="demo-dial-value">DIAL 1.0</div>
+          <div class="demo-title">Crystal Morning</div>
+          <p class="demo-desc">Glassy, bell-like clarity. Responds to every nuance of your picking dynamics. Studio-ready from the first note.</p>
+          <button class="demo-btn">Coming Soon</button>
+        </div>
+      </div>
+
+      <!-- Crunch -->
+      <div class="demo-card" style="--card-accent: #d4a028;">
+        <div class="vinyl-wrap">
+          <svg class="vinyl-svg" viewBox="0 0 160 160">
+            <defs>
+              <radialGradient id="vinylSheen2" cx="35%" cy="35%" r="60%">
+                <stop offset="0%" stop-color="#fff" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <circle class="vinyl-body" cx="80" cy="80" r="76"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="72"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="67"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="62"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="57"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="52"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="47"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="42"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="37"/>
+            <circle cx="80" cy="80" r="76" fill="url(#vinylSheen2)" opacity="0.12"/>
+            <circle class="vinyl-label" cx="80" cy="80" r="26" fill="#d4a028"/>
+            <circle class="vinyl-label-inner" cx="80" cy="80" r="18" fill="#b08820"/>
+            <circle class="vinyl-hole" cx="80" cy="80" r="4"/>
+          </svg>
+        </div>
+        <div class="demo-card-body">
+          <div class="demo-zone-tag"><span class="demo-zone-dot" style="background:#d4a028;"></span> Crunch</div>
+          <div class="demo-dial-value">DIAL 5.0</div>
+          <div class="demo-title">Saturday Rig</div>
+          <p class="demo-desc">The sweet spot. That pushed-amp breakup that cleans up with your volume knob. Weekend warrior perfection.</p>
+          <button class="demo-btn">Coming Soon</button>
+        </div>
+      </div>
+
+      <!-- Lead -->
+      <div class="demo-card" style="--card-accent: #c43030;">
+        <div class="vinyl-wrap">
+          <svg class="vinyl-svg" viewBox="0 0 160 160">
+            <defs>
+              <radialGradient id="vinylSheen3" cx="35%" cy="35%" r="60%">
+                <stop offset="0%" stop-color="#fff" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <circle class="vinyl-body" cx="80" cy="80" r="76"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="72"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="67"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="62"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="57"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="52"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="47"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="42"/>
+            <circle class="vinyl-groove" cx="80" cy="80" r="37"/>
+            <circle cx="80" cy="80" r="76" fill="url(#vinylSheen3)" opacity="0.12"/>
+            <circle class="vinyl-label" cx="80" cy="80" r="26" fill="#c43030"/>
+            <circle class="vinyl-label-inner" cx="80" cy="80" r="18" fill="#a02828"/>
+            <circle class="vinyl-hole" cx="80" cy="80" r="4"/>
+          </svg>
+        </div>
+        <div class="demo-card-body">
+          <div class="demo-zone-tag"><span class="demo-zone-dot" style="background:#c43030;"></span> Lead</div>
+          <div class="demo-dial-value">DIAL 9.5</div>
+          <div class="demo-title">Infinite Sustain</div>
+          <p class="demo-desc">Saturated, singing lead tone with endless sustain. Notes bloom and decay like a tube amp cranked past reason.</p>
+          <button class="demo-btn">Coming Soon</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════ SECTION DIVIDER ═══════════ -->
+<div class="section-divider"></div>
+
+
+<!-- ═══════════════════════════════════════════
+     03 — ARCHITECTURE — SIGNAL CHAIN
+     ═══════════════════════════════════════════ -->
+<section class="architecture" id="architecture">
+  <div class="architecture-inner">
+    <div class="arch-header reveal">
+      <div class="section-number">03 &mdash; Signal Chain</div>
+      <h2 class="section-title">Under the <em>hood</em></h2>
+    </div>
+
+    <!-- Signal flow -->
+    <div class="signal-chain reveal">
+      <div class="signal-node">
+        <div class="signal-node-label">Input</div>
+        <div class="signal-node-name">Audio In</div>
+      </div>
+      <span class="signal-arrow">&rarr;</span>
+      <div class="signal-node">
+        <div class="signal-node-label">Gate</div>
+        <div class="signal-node-name">Noise Gate</div>
+      </div>
+      <span class="signal-arrow">&rarr;</span>
+      <div class="signal-node core-node">
+        <div class="signal-node-label">Core</div>
+        <div class="signal-node-name">Zone Blender</div>
+      </div>
+      <span class="signal-arrow">&rarr;</span>
+      <div class="signal-node">
+        <div class="signal-node-label">Cabinet</div>
+        <div class="signal-node-name">IR Convolution</div>
+      </div>
+      <span class="signal-arrow">&rarr;</span>
+      <div class="signal-node">
+        <div class="signal-node-label">Output</div>
+        <div class="signal-node-name">Volume</div>
+      </div>
+    </div>
+
+    <!-- Blend detail -->
+    <div class="blend-detail reveal">
+      <div class="blend-visual">
+        <div class="blend-channel">
+          <div class="blend-channel-label">Zone A</div>
+          <div class="blend-channel-value">NAM + IR</div>
+        </div>
+        <div class="blend-operator">&times;</div>
+        <div class="blend-alpha">
+          <div class="blend-alpha-label">BLEND</div>
+          <div class="blend-alpha-symbol">&alpha;</div>
+        </div>
+        <div class="blend-operator">+</div>
+        <div class="blend-channel">
+          <div class="blend-channel-label">Zone B</div>
+          <div class="blend-channel-value">NAM + IR</div>
+        </div>
+      </div>
+      <p class="blend-explanation">
+        The <code>ZoneBlender</code> runs two adjacent NAM engines in parallel.<br>
+        Crossfade factor <code>&alpha;</code> is computed from <code>getZoneBlend(dial)</code> &mdash;<br>
+        giving you continuous, artifact-free tonal morphing.
+      </p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════ SECTION DIVIDER ═══════════ -->
+<div class="section-divider"></div>
+
+
+<!-- ═══════════════════════════════════════════
+     04 — CTA
+     ═══════════════════════════════════════════ -->
+<section class="section cta-section" id="get-it">
+  <!-- Floating orbs -->
+  <div class="cta-orbs">
+    <div class="cta-orb cta-orb--gold"></div>
+    <div class="cta-orb cta-orb--cyan"></div>
+    <div class="cta-orb cta-orb--magenta"></div>
+  </div>
+
+  <!-- VU meter bars -->
+  <div class="cta-vu" id="ctaVu"></div>
+
+  <div class="section-inner">
+    <div class="section-number">04 &mdash; Get It</div>
+    <h2 class="section-title">Stop tweaking.<br>Start playing.</h2>
+    <p class="section-subtitle">Free. Open source. No signup, no trial, no strings. Just download and plug in.</p>
+
+    <div class="cta-buttons">
+      <a href="https://github.com/linoaleman/onedial/releases" target="_blank" rel="noopener" class="btn-primary">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 12l-4.5-4.5 1.06-1.06L7.5 9.38V1h1v8.38l2.94-2.94 1.06 1.06L8 12zm-6 2h12v1H2v-1z"/></svg>
+        Download for macOS
+      </a>
+      <a href="https://github.com/linoaleman/onedial" target="_blank" rel="noopener" class="btn-secondary">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+
+    <p class="cta-note">macOS 12+ &middot; Audio Unit &middot; Logic Pro, GarageBand &amp; any AU host &middot; Apple Silicon native</p>
+  </div>
+</section>
+
+
+<!-- ═══════════ SECTION DIVIDER ═══════════ -->
+<div class="section-divider"></div>
+
+
+<!-- ═══════════════════════════════════════════
+     05 — BUILD
+     ═══════════════════════════════════════════ -->
+<section class="section build-section" id="build">
+  <div class="section-inner">
+    <div class="section-number">05 &mdash; Open Source</div>
+    <h2 class="section-title">Build it yourself</h2>
+    <p class="section-subtitle">Everything you need to compile, modify, and ship your own version.</p>
+
+    <div class="build-columns">
+
+      <!-- Terminal -->
+      <div class="terminal">
+        <div class="terminal-bar">
+          <span class="terminal-dot"></span>
+          <span class="terminal-dot"></span>
+          <span class="terminal-dot"></span>
+          <span class="terminal-bar-title">Terminal</span>
+        </div>
+        <div class="terminal-body">
+<span class="t-comment"># Clone</span>
+<br><span class="t-prompt">$</span> <span class="t-cmd">git clone</span> <span class="t-path">https://github.com/linoaleman/onedial.git</span>
+<br><span class="t-prompt">$</span> <span class="t-cmd">cd</span> <span class="t-path">onedial</span>
+<br><br><span class="t-comment"># Configure &amp; Build</span>
+<br><span class="t-prompt">$</span> <span class="t-cmd">cmake</span> <span class="t-flag">-B build -DCMAKE_BUILD_TYPE=</span><span class="t-path">Release</span>
+<br><span class="t-prompt">$</span> <span class="t-cmd">cmake</span> <span class="t-flag">--build build --config</span> <span class="t-path">Release</span>
+<br><br><span class="t-comment"># AU plugin auto-installs to</span>
+<br><span class="t-comment"># ~/Library/Audio/Plug-Ins/Components/</span>
+<br><br><span class="t-comment"># Allow unsigned AUs in Logic Pro</span>
+<br><span class="t-prompt">$</span> <span class="t-cmd">defaults write</span> <span class="t-path">com.apple.Logic10</span> \
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-flag">DoNotValidateAudioUnits -bool</span> <span class="t-path">YES</span>
+        </div>
+      </div>
+
+      <!-- Tech Stack -->
+      <div class="tech-stack">
+        <div class="tech-stack-title">Tech Stack</div>
+
+        <div class="tech-item">
+          <span class="tech-badge">JUCE 8.0.6</span>
+          <span class="tech-desc">Cross-platform audio framework</span>
+        </div>
+        <div class="tech-item">
+          <span class="tech-badge">NAM</span>
+          <span class="tech-desc">NeuralAmpModelerCore, neural network inference</span>
+        </div>
+        <div class="tech-item">
+          <span class="tech-badge">C++17</span>
+          <span class="tech-desc">Modern C++ with CMake 3.22+</span>
+        </div>
+        <div class="tech-item">
+          <span class="tech-badge">Eigen</span>
+          <span class="tech-desc">High-performance linear algebra, header-only</span>
+        </div>
+        <div class="tech-item">
+          <span class="tech-badge">macOS</span>
+          <span class="tech-desc">Audio Unit + Standalone, macOS 12+</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="build-cta">
+      <a href="https://github.com/linoaleman/onedial" target="_blank" rel="noopener" class="github-btn">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════ -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <a href="#hero" class="footer-brand">OneDial</a>
+    <ul class="footer-links">
+      <li><a href="#zones">Zones</a></li>
+      <li><a href="#architecture">Signal</a></li>
+      <li><a href="#demos">Demos</a></li>
+      <li><a href="#get-it">Get It</a></li>
+      <li><a href="https://github.com/linoaleman/onedial" target="_blank" rel="noopener">GitHub</a></li>
+    </ul>
+    <p class="footer-copy">&copy; 2026 OneDial. Built with JUCE &amp; NeuralAmpModelerCore. Open source under MIT License.</p>
+  </div>
+</footer>
+
+
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════════════ -->
+<script>
+(function() {
+  'use strict';
+
+  /* ════════════════════════════════════
+     NAV — SCROLL GLASSMORPHISM + HAMBURGER
+     ════════════════════════════════════ */
+  var siteNav = document.getElementById('siteNav');
+  var navHamburger = document.getElementById('navHamburger');
+  var navLinks = document.getElementById('navLinks');
+
+  window.addEventListener('scroll', function() {
+    if (window.scrollY > 40) {
+      siteNav.classList.add('scrolled');
+    } else {
+      siteNav.classList.remove('scrolled');
+    }
+  });
+
+  navHamburger.addEventListener('click', function() {
+    navLinks.classList.toggle('open');
+  });
+
+  // Close mobile menu on link click
+  navLinks.querySelectorAll('a').forEach(function(link) {
+    link.addEventListener('click', function() {
+      navLinks.classList.remove('open');
+    });
+  });
+
+
+  /* ════════════════════════════════════
+     ZONE DATA
+     ════════════════════════════════════ */
+  var ZONES = [
+    { name: 'CLEAN',  min: 0,  max: 2,  color: '#4a8c3a', glow: 'rgba(74, 140, 58, 0.25)' },
+    { name: 'WARM',   min: 2,  max: 4,  color: '#7aaa3a', glow: 'rgba(122, 170, 58, 0.25)' },
+    { name: 'CRUNCH', min: 4,  max: 6,  color: '#d4a028', glow: 'rgba(212, 160, 40, 0.25)' },
+    { name: 'DRIVE',  min: 6,  max: 8,  color: '#c45e20', glow: 'rgba(196, 94, 32, 0.25)' },
+    { name: 'LEAD',   min: 8,  max: 10, color: '#c43030', glow: 'rgba(196, 48, 48, 0.25)' },
+  ];
+
+
+  /* ════════════════════════════════════
+     DIAL CONSTANTS
+     ════════════════════════════════════ */
+  var CX = 120, CY = 120, R_OUTER = 95;
+  var ANGLE_MIN = 225;  // 7 o'clock
+  var ANGLE_RANGE = 270;
+  var POINTER_R = 68;
+
+  var dialValue = 5.0;
+
+  var dialSvg = document.getElementById('dialSvg');
+  var dialPointer = document.getElementById('dialPointer');
+  var dialZoneLabel = document.getElementById('dialZoneLabel');
+  var dialValueDisplay = document.getElementById('dialValueDisplay');
+  var grilleGlow = document.getElementById('grilleGlow');
+  var dialTicksG = document.getElementById('dialTicks');
+  var dialArcsG = document.getElementById('dialZoneArcs');
+  var dialGripG = document.getElementById('dialGripLines');
+
+  function valueToAngle(val) {
+    return ANGLE_MIN - (val / 10) * ANGLE_RANGE;
+  }
+  function toRad(deg) {
+    return (deg * Math.PI) / 180;
+  }
+  function getZone(val) {
+    for (var i = 0; i < ZONES.length; i++) {
+      if (val >= ZONES[i].min && val <= ZONES[i].max) return ZONES[i];
+    }
+    return ZONES[ZONES.length - 1];
+  }
+
+  /* Draw zone arcs */
+  function drawZoneArcs() {
+    var arcR = 88;
+    ZONES.forEach(function(zone) {
+      var startAngle = toRad(valueToAngle(zone.min));
+      var endAngle = toRad(valueToAngle(zone.max));
+      var x1 = CX + arcR * Math.cos(startAngle);
+      var y1 = CY - arcR * Math.sin(startAngle);
+      var x2 = CX + arcR * Math.cos(endAngle);
+      var y2 = CY - arcR * Math.sin(endAngle);
+
+      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      var largeArc = Math.abs(valueToAngle(zone.max) - valueToAngle(zone.min)) > 180 ? 1 : 0;
+      path.setAttribute('d', 'M ' + x1 + ' ' + y1 + ' A ' + arcR + ' ' + arcR + ' 0 ' + largeArc + ' 1 ' + x2 + ' ' + y2);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', zone.color);
+      path.setAttribute('stroke-width', '3');
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('opacity', '0.25');
+      path.setAttribute('data-zone-arc', zone.name);
+      dialArcsG.appendChild(path);
+    });
+  }
+
+  /* Draw tick marks */
+  function drawTicks() {
+    for (var i = 0; i <= 50; i++) {
+      var val = i * 0.2;
+      var angle = valueToAngle(val);
+      var rad = toRad(angle);
+      var isMajor = val % 2 === 0;
+      var isMinor = val % 1 === 0;
+      var innerR = isMajor ? R_OUTER - 14 : isMinor ? R_OUTER - 9 : R_OUTER - 6;
+      var outerR = R_OUTER - 1;
+
+      if (!isMajor && !isMinor && i % 5 !== 0) continue;
+
+      var x1 = CX + innerR * Math.cos(rad);
+      var y1 = CY - innerR * Math.sin(rad);
+      var x2 = CX + outerR * Math.cos(rad);
+      var y2 = CY - outerR * Math.sin(rad);
+
+      var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', x1);
+      line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2);
+      line.setAttribute('y2', y2);
+      line.setAttribute('stroke', isMajor ? 'rgba(197,164,78,0.4)' : 'rgba(197,164,78,0.15)');
+      line.setAttribute('stroke-width', isMajor ? '1.5' : '0.75');
+      dialTicksG.appendChild(line);
+
+      if (isMajor) {
+        var labelR = R_OUTER + 8;
+        var lx = CX + labelR * Math.cos(rad);
+        var ly = CY - labelR * Math.sin(rad);
+        var text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', lx);
+        text.setAttribute('y', ly);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('dominant-baseline', 'central');
+        text.setAttribute('font-family', "'JetBrains Mono', monospace");
+        text.setAttribute('font-size', '7');
+        text.setAttribute('font-weight', '400');
+        text.setAttribute('fill', 'rgba(197,164,78,0.3)');
+        text.setAttribute('data-tick-val', val);
+        text.textContent = val;
+        dialTicksG.appendChild(text);
+      }
+    }
+  }
+
+  /* Draw grip lines on knob */
+  function drawGripLines() {
+    for (var i = 0; i < 24; i++) {
+      var angle = (i / 24) * 360;
+      var rad = toRad(angle);
+      var r1 = 54;
+      var r2 = 64;
+      var x1 = CX + r1 * Math.cos(rad);
+      var y1 = CY - r1 * Math.sin(rad);
+      var x2 = CX + r2 * Math.cos(rad);
+      var y2 = CY - r2 * Math.sin(rad);
+
+      var line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', x1);
+      line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2);
+      line.setAttribute('y2', y2);
+      line.setAttribute('stroke', 'rgba(197,164,78,0.04)');
+      line.setAttribute('stroke-width', '0.5');
+      dialGripG.appendChild(line);
+    }
+  }
+
+  /* Update dial */
+  function updateDial(val) {
+    dialValue = Math.max(0, Math.min(10, val));
+    var angle = valueToAngle(dialValue);
+    var rad = toRad(angle);
+
+    // Pointer
+    var px = CX + POINTER_R * Math.cos(rad);
+    var py = CY - POINTER_R * Math.sin(rad);
+    dialPointer.setAttribute('x2', px);
+    dialPointer.setAttribute('y2', py);
+
+    // Readout
+    var zone = getZone(dialValue);
+    dialZoneLabel.textContent = zone.name;
+    dialValueDisplay.textContent = dialValue.toFixed(1);
+
+    // Colors
+    var root = document.documentElement;
+    root.style.setProperty('--active-zone-color', zone.color);
+    root.style.setProperty('--active-zone-glow', zone.glow);
+    dialZoneLabel.style.color = zone.color;
+
+    // Grille glow
+    grilleGlow.style.background = 'radial-gradient(ellipse at center 60%, ' + zone.glow + ' 0%, transparent 65%)';
+
+    // Pointer glow
+    dialPointer.setAttribute('style', 'filter: drop-shadow(0 0 6px ' + zone.color + '40);');
+
+    // Highlight active zone arc
+    dialArcsG.querySelectorAll('path').forEach(function(p) {
+      var isActive = p.getAttribute('data-zone-arc') === zone.name;
+      p.setAttribute('opacity', isActive ? '0.7' : '0.15');
+      p.setAttribute('stroke-width', isActive ? '4' : '3');
+    });
+  }
+
+  drawZoneArcs();
+  drawTicks();
+  drawGripLines();
+  updateDial(5.0);
+
+
+  /* ════════════════════════════════════
+     DIAL INTERACTION
+     ════════════════════════════════════ */
+  var isDragging = false;
+  var dragStartY = 0;
+  var dragStartValue = 0;
+  var DRAG_SENSITIVITY = 0.05; // dial units per pixel dragged
+
+  dialSvg.addEventListener('mousedown', function(e) {
+    isDragging = true;
+    dragStartY = e.clientY;
+    dragStartValue = dialValue;
+    resetIdle();
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    var deltaY = dragStartY - e.clientY; // up = positive
+    var newVal = dragStartValue + deltaY * DRAG_SENSITIVITY;
+    updateDial(Math.max(0, Math.min(10, newVal)));
+  });
+  window.addEventListener('mouseup', function() {
+    if (isDragging) { isDragging = false; resetIdle(); }
+  });
+
+  // Touch
+  dialSvg.addEventListener('touchstart', function(e) {
+    isDragging = true;
+    dragStartY = e.touches[0].clientY;
+    dragStartValue = dialValue;
+    resetIdle();
+  }, { passive: true });
+  window.addEventListener('touchmove', function(e) {
+    if (!isDragging) return;
+    var deltaY = dragStartY - e.touches[0].clientY;
+    var newVal = dragStartValue + deltaY * DRAG_SENSITIVITY;
+    updateDial(Math.max(0, Math.min(10, newVal)));
+  }, { passive: true });
+  window.addEventListener('touchend', function() {
+    if (isDragging) { isDragging = false; resetIdle(); }
+  });
+
+  /* Idle dial animation */
+  var idleTimeout, idleRAF;
+  function startIdle() {
+    var t = 0;
+    var base = dialValue;
+    function animate() {
+      t += 0.006;
+      updateDial(base + Math.sin(t) * 0.4);
+      idleRAF = requestAnimationFrame(animate);
+    }
+    idleRAF = requestAnimationFrame(animate);
+  }
+  function resetIdle() {
+    clearTimeout(idleTimeout);
+    cancelAnimationFrame(idleRAF);
+    idleTimeout = setTimeout(startIdle, 5000);
+  }
+  idleTimeout = setTimeout(startIdle, 6000);
+
+
+  /* ════════════════════════════════════
+     GRILLE OSCILLOSCOPE CANVAS
+     ════════════════════════════════════ */
+  var grilleCanvas = document.getElementById('grilleCanvas');
+  var gCtx = grilleCanvas.getContext('2d');
+  var grilleAnimId;
+
+  function resizeGrilleCanvas() {
+    var rect = grilleCanvas.parentElement.getBoundingClientRect();
+    grilleCanvas.width = rect.width * (window.devicePixelRatio || 1);
+    grilleCanvas.height = rect.height * (window.devicePixelRatio || 1);
+    grilleCanvas.style.width = rect.width + 'px';
+    grilleCanvas.style.height = rect.height + 'px';
+  }
+
+  // Keypoints at dial 0, 2.5, 5, 7.5, 10 — interpolated smoothly
+  var grilleStops = [
+    { dial: 0,    freq: 1.5, amp: 0.2,  noise: 0.02, speed: 1,   r: 74,  g: 140, b: 58  },  // clean
+    { dial: 2.5,  freq: 2.5, amp: 0.3,  noise: 0.06, speed: 1.5, r: 122, g: 170, b: 58  },  // warm
+    { dial: 5,    freq: 3.5, amp: 0.45, noise: 0.15, speed: 2,   r: 212, g: 160, b: 40  },  // crunch
+    { dial: 7.5,  freq: 5,   amp: 0.6,  noise: 0.25, speed: 2.5, r: 196, g: 94,  b: 32  },  // drive
+    { dial: 10,   freq: 7,   amp: 0.8,  noise: 0.4,  speed: 3,   r: 196, g: 48,  b: 48  },  // lead
+  ];
+
+  function lerpGrille(val) {
+    var v = Math.max(0, Math.min(10, val));
+    // Find surrounding stops
+    var lo = grilleStops[0], hi = grilleStops[grilleStops.length - 1];
+    for (var i = 0; i < grilleStops.length - 1; i++) {
+      if (v >= grilleStops[i].dial && v <= grilleStops[i + 1].dial) {
+        lo = grilleStops[i];
+        hi = grilleStops[i + 1];
+        break;
+      }
+    }
+    var t = (hi.dial === lo.dial) ? 0 : (v - lo.dial) / (hi.dial - lo.dial);
+    return {
+      freq:  lo.freq  + (hi.freq  - lo.freq)  * t,
+      amp:   lo.amp   + (hi.amp   - lo.amp)   * t,
+      noise: lo.noise + (hi.noise - lo.noise) * t,
+      speed: lo.speed + (hi.speed - lo.speed) * t,
+      r: Math.round(lo.r + (hi.r - lo.r) * t),
+      g: Math.round(lo.g + (hi.g - lo.g) * t),
+      b: Math.round(lo.b + (hi.b - lo.b) * t),
+    };
+  }
+
+  function drawGrilleOsc() {
+    var w = grilleCanvas.width;
+    var h = grilleCanvas.height;
+    gCtx.clearRect(0, 0, w, h);
+
+    var p = lerpGrille(dialValue);
+    var time = Date.now() / 1000;
+
+    for (var layer = 0; layer < 3; layer++) {
+      var layerAlpha = 0.4 - layer * 0.1;
+      var freqMult = 1 + layer * 0.5;
+      gCtx.beginPath();
+      gCtx.strokeStyle = 'rgba(' + p.r + ',' + p.g + ',' + p.b + ',' + layerAlpha + ')';
+      gCtx.lineWidth = 2 - layer * 0.4;
+
+      for (var x = 0; x < w; x++) {
+        var t = x / w;
+        var wave = Math.sin(t * Math.PI * 2 * p.freq * freqMult + time * p.speed + layer) * p.amp;
+        var harmonics = Math.sin(t * Math.PI * 2 * p.freq * 3 * freqMult + time * p.speed * 1.5) * p.amp * 0.3;
+        var noise = (Math.sin(x * 0.3 + time * 7) * Math.sin(x * 0.7 + time * 3)) * p.noise;
+        var y = h / 2 + (wave + harmonics + noise) * h * 0.35;
+        if (x === 0) gCtx.moveTo(x, y);
+        else gCtx.lineTo(x, y);
+      }
+      gCtx.stroke();
+    }
+
+    // Center line
+    gCtx.beginPath();
+    gCtx.strokeStyle = 'rgba(' + p.r + ',' + p.g + ',' + p.b + ',0.05)';
+    gCtx.lineWidth = 1;
+    gCtx.moveTo(0, h / 2);
+    gCtx.lineTo(w, h / 2);
+    gCtx.stroke();
+
+    grilleAnimId = requestAnimationFrame(drawGrilleOsc);
+  }
+
+  resizeGrilleCanvas();
+  drawGrilleOsc();
+  window.addEventListener('resize', resizeGrilleCanvas);
+
+
+  /* ════════════════════════════════════
+     ZONE OSCILLOSCOPE CANVASES (from v2)
+     ════════════════════════════════════ */
+  document.querySelectorAll('.zone-oscilloscope').forEach(function(canvas) {
+    var zone = canvas.getAttribute('data-zone-osc');
+    var ctx = canvas.getContext('2d');
+    var configs = {
+      clean:  { freq: 1.5, amp: 0.2, noise: 0.02, color: [74,140,58], speed: 1 },
+      warm:   { freq: 2.5, amp: 0.3, noise: 0.06, color: [122,170,58], speed: 1.5 },
+      crunch: { freq: 3.5, amp: 0.45, noise: 0.15, color: [212,160,40], speed: 2 },
+      drive:  { freq: 5, amp: 0.6, noise: 0.25, color: [196,94,32], speed: 2.5 },
+      lead:   { freq: 7, amp: 0.8, noise: 0.4, color: [196,48,48], speed: 3 },
+    };
+    var cfg = configs[zone] || configs.crunch;
+
+    var w, h;
+    function resize() {
+      w = canvas.width = canvas.offsetWidth * 2;
+      h = canvas.height = canvas.offsetHeight * 2;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    function draw() {
+      ctx.clearRect(0, 0, w, h);
+      var time = Date.now() / 1000;
+      var cr = cfg.color[0], cg = cfg.color[1], cb = cfg.color[2];
+
+      for (var layer = 0; layer < 3; layer++) {
+        var layerAlpha = 0.15 - layer * 0.04;
+        var freqMult = 1 + layer * 0.5;
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(' + cr + ',' + cg + ',' + cb + ',' + layerAlpha + ')';
+        ctx.lineWidth = 1.5 - layer * 0.3;
+
+        for (var x = 0; x < w; x++) {
+          var t = x / w;
+          var wave = Math.sin(t * Math.PI * 2 * cfg.freq * freqMult + time * cfg.speed + layer) * cfg.amp;
+          var harmonics = Math.sin(t * Math.PI * 2 * cfg.freq * 3 * freqMult + time * cfg.speed * 1.5) * cfg.amp * 0.3;
+          var noise = (Math.sin(x * 0.3 + time * 7) * Math.sin(x * 0.7 + time * 3)) * cfg.noise;
+          var y = h / 2 + (wave + harmonics + noise) * h * 0.35;
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+      // Center line
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(' + cr + ',' + cg + ',' + cb + ',0.05)';
+      ctx.lineWidth = 1;
+      ctx.moveTo(0, h / 2);
+      ctx.lineTo(w, h / 2);
+      ctx.stroke();
+
+      requestAnimationFrame(draw);
+    }
+    draw();
+  });
+
+
+  /* ════════════════════════════════════
+     SPECTRUM BARS (zone cards)
+     ════════════════════════════════════ */
+  var spectrumContainers = {
+    clean: document.getElementById('specClean'),
+    warm: document.getElementById('specWarm'),
+    crunch: document.getElementById('specCrunch'),
+    drive: document.getElementById('specDrive'),
+    lead: document.getElementById('specLead'),
+  };
+
+  Object.keys(spectrumContainers).forEach(function(name) {
+    var container = spectrumContainers[name];
+    var barCount = 16;
+    for (var i = 0; i < barCount; i++) {
+      var bar = document.createElement('div');
+      bar.className = 'zone-spectrum-bar';
+      var speed = 0.6 + Math.random() * 0.8;
+      var delay = Math.random() * 0.5;
+      var hMin = 3 + Math.random() * 4;
+      var hMax = 12 + Math.random() * 22;
+      bar.style.setProperty('--bar-speed', speed + 's');
+      bar.style.setProperty('--bar-delay', delay + 's');
+      bar.style.setProperty('--bar-h-min', hMin + 'px');
+      bar.style.setProperty('--bar-h-max', hMax + 'px');
+      bar.style.height = hMin + 'px';
+      container.appendChild(bar);
+    }
+  });
+
+
+  /* ════════════════════════════════════
+     VU METER BARS (CTA section)
+     ════════════════════════════════════ */
+  var vuContainer = document.getElementById('ctaVu');
+  if (vuContainer) {
+    var barCount = 32;
+    for (var i = 0; i < barCount; i++) {
+      var bar = document.createElement('div');
+      bar.className = 'cta-vu-bar';
+      var maxH = 10 + Math.random() * 35;
+      var speed = 0.6 + Math.random() * 1.2;
+      var delay = Math.random() * 2;
+      bar.style.setProperty('--vu-height', maxH + 'px');
+      bar.style.setProperty('--vu-speed', speed + 's');
+      bar.style.setProperty('--vu-delay', delay + 's');
+      vuContainer.appendChild(bar);
+    }
+  }
+
+
+  /* ════════════════════════════════════
+     VINYL SPIN — TRANSFORM ORIGIN
+     ════════════════════════════════════ */
+  document.querySelectorAll('.vinyl-svg').forEach(function(svg) {
+    svg.style.transformOrigin = 'center center';
+  });
+
+
+  /* ════════════════════════════════════
+     SCROLL REVEAL (combined)
+     ════════════════════════════════════ */
+  var revealObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.reveal').forEach(function(el) {
+    revealObserver.observe(el);
+  });
+
+  /* Fade-in for Part 2 elements */
+  var fadeObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.demo-card, .terminal, .tech-stack, .cta-buttons').forEach(function(el) {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(30px)';
+    el.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+    fadeObserver.observe(el);
+  });
+
+})();
+</script>
+
+</body>
+</html>

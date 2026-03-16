@@ -25,13 +25,6 @@
   --v-cream-dim: #a89878;
   --v-muted: #6b5d4a;
 
-  /* Marshall gold */
-  --m-gold: #c5a44e;
-  --m-gold-bright: #dbb95c;
-  --m-gold-dim: #8a7535;
-  --m-tolex: #1a1712;
-  --m-grille: #2a2318;
-
   --f-cyan: #00d4ff;
   --f-cyan-glow: rgba(0, 212, 255, 0.25);
   --f-magenta: #ff00aa;
@@ -71,9 +64,56 @@ body::before {
   inset: 0;
   z-index: 10000;
   pointer-events: none;
-  opacity: 0.04;
+  opacity: 0.035;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 256px;
+}
+
+/* ═══════════ PHOTO SECTION BACKGROUNDS ═══════════ */
+.photo-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  pointer-events: none;
+}
+.photo-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--v-black);
+  opacity: var(--photo-opacity, 0.82);
+}
+
+/* Hero amp photo */
+.hero-photo {
+  background-image: url('https://images.pexels.com/photos/210873/pexels-photo-210873.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=2');
+  --photo-opacity: 0.78;
+}
+
+/* Signal chain — amp internals */
+.signal-photo {
+  background-image: url('https://images.pexels.com/photos/351265/pexels-photo-351265.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=2');
+  --photo-opacity: 0.88;
+}
+
+/* Demos — vinyl */
+.demos-photo {
+  background-image: url('https://images.pexels.com/photos/164853/pexels-photo-164853.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=2');
+  --photo-opacity: 0.88;
+}
+
+/* CTA — stage */
+.cta-photo {
+  background-image: url('https://images.pexels.com/photos/167636/pexels-photo-167636.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=2');
+  --photo-opacity: 0.8;
+}
+
+/* Specs — amp panel closeup */
+.specs-photo {
+  background-image: url('https://images.pexels.com/photos/164903/pexels-photo-164903.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=2');
+  --photo-opacity: 0.9;
 }
 
 body::after {
@@ -97,18 +137,7 @@ body::after {
   pointer-events: none;
 }
 
-/* ═══════════ TOLEX TEXTURE — Marshall-style ═══════════ */
-.tolex-texture {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.025;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23t)'/%3E%3C/svg%3E");
-  background-size: 200px;
-}
-
-/* ═══════════ NAV — with gold piping ═══════════ */
+/* ═══════════ NAV ═══════════ */
 nav {
   position: fixed;
   top: 0; left: 0; right: 0;
@@ -119,14 +148,13 @@ nav {
   align-items: center;
   background: rgba(10, 9, 8, 0.4);
   backdrop-filter: blur(30px) saturate(1.5);
-  border-bottom: 1px solid rgba(197, 164, 78, 0.08);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
   transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 nav.scrolled {
   background: rgba(10, 9, 8, 0.85);
-  border-bottom-color: rgba(197, 164, 78, 0.15);
+  border-bottom-color: rgba(212, 160, 40, 0.1);
   padding: 0.8rem 3rem;
-  box-shadow: 0 2px 20px rgba(0,0,0,0.5), inset 0 -1px 0 rgba(197, 164, 78, 0.06);
 }
 
 .nav-logo {
@@ -134,13 +162,12 @@ nav.scrolled {
   font-size: 1.5rem;
   font-weight: 400;
   font-style: italic;
-  color: var(--m-gold-bright);
+  color: var(--v-amber);
   text-decoration: none;
   letter-spacing: 0.02em;
   transition: text-shadow 0.4s;
-  text-shadow: 0 0 10px rgba(197, 164, 78, 0.15);
 }
-.nav-logo:hover { text-shadow: 0 0 30px rgba(197, 164, 78, 0.4); }
+.nav-logo:hover { text-shadow: 0 0 30px var(--v-amber-glow); }
 
 .nav-links { display: flex; gap: 2.5rem; list-style: none; align-items: center; }
 .nav-links a {
@@ -159,13 +186,13 @@ nav.scrolled {
   position: absolute;
   bottom: -4px; left: 0;
   width: 0; height: 1px;
-  background: var(--m-gold);
+  background: var(--v-amber);
   transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .nav-links a:not(.nav-cta):hover::after { width: 100%; }
 
 .nav-cta {
-  background: var(--m-gold);
+  background: var(--v-amber);
   color: var(--v-black) !important;
   padding: 0.5rem 1.5rem;
   border-radius: 2px;
@@ -173,9 +200,9 @@ nav.scrolled {
   transition: all 0.3s !important;
 }
 .nav-cta:hover {
-  background: var(--m-gold-bright);
+  background: var(--v-amber-light);
   transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(197, 164, 78, 0.3);
+  box-shadow: 0 4px 20px var(--v-amber-glow);
 }
 
 .nav-hamburger {
@@ -217,405 +244,169 @@ nav.scrolled {
   text-decoration: none;
   transition: color 0.3s;
 }
-.nav-mobile-overlay a:hover { color: var(--m-gold); }
+.nav-mobile-overlay a:hover { color: var(--v-amber); }
 .nav-mobile-overlay .nav-cta {
   font-family: var(--font-heading);
   font-size: 0.9rem;
   font-style: normal;
   margin-top: 1rem;
-  background: var(--m-gold);
+  background: var(--v-amber);
   color: var(--v-black);
   padding: 0.75rem 2rem;
   border-radius: 2px;
 }
 
-/* ═══════════ HERO — AMP HEAD (full-bleed) ═══════════ */
+/* ═══════════ HERO (unchanged) ═══════════ */
 .hero {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  position: relative;
-  z-index: 1;
-  padding: 0;
-  overflow: hidden;
-}
-
-/* ── Amp body — full width, IS the page ── */
-.amp-body {
-  position: relative;
-  width: 100%;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  opacity: 0;
-  animation: ampReveal 1.5s 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* ── Top logo bar — silk-screened brand ── */
-.amp-logo-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5.5rem 4rem 1rem;
-  background: linear-gradient(180deg, rgba(18, 16, 13, 0.95) 0%, rgba(14, 13, 10, 0.98) 100%);
-  position: relative;
-  z-index: 3;
-}
-
-.amp-brand {
-  font-family: var(--font-display);
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
-  font-weight: 400;
-  font-style: italic;
-  color: var(--m-gold-bright);
-  letter-spacing: 0.02em;
-  text-shadow: 0 0 30px rgba(197, 164, 78, 0.15);
-  line-height: 1;
-}
-
-.amp-model {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--m-gold-dim);
-  opacity: 0.5;
-  text-align: right;
-}
-.amp-model-line {
-  display: block;
-  margin-top: 0.2rem;
-  font-size: 0.5rem;
-  opacity: 0.4;
-  letter-spacing: 0.2em;
-  color: var(--v-cream-dim);
-}
-
-/* Corner rivets on logo bar */
-.amp-logo-bar .corner-rivet {
-  position: absolute;
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #d0c8b8, #6a6258 50%, #3a3530 100%);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.6), inset 0 0.5px 0.5px rgba(255,255,255,0.1);
-}
-.amp-logo-bar .corner-rivet:nth-child(1) { top: 5.2rem; left: 20px; }
-.amp-logo-bar .corner-rivet:nth-child(2) { top: 5.2rem; right: 20px; }
-
-/* Gold piping between logo and grille */
-.amp-piping-top {
-  height: 2px;
-  background: linear-gradient(90deg,
-    rgba(197, 164, 78, 0.03),
-    rgba(197, 164, 78, 0.12) 15%,
-    rgba(197, 164, 78, 0.18) 50%,
-    rgba(197, 164, 78, 0.12) 85%,
-    rgba(197, 164, 78, 0.03)
-  );
-  position: relative;
-  z-index: 3;
-}
-
-/* ── Grille cloth section — the big visual ── */
-.amp-grille {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  background: #0c0b09;
-  overflow: hidden;
-  z-index: 2;
-}
-
-/* The actual grille cloth dots */
-.amp-grille-cloth {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle, rgba(197, 164, 78, 0.1) 0.6px, transparent 0.6px);
-  background-size: 4px 4px;
-  z-index: 1;
-}
-
-/* Warm ambient light on grille — shifts with theme */
-.amp-grille-glow {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%; height: 100%;
-  background: radial-gradient(ellipse at center 60%, var(--theme-glow) 0%, transparent 65%);
-  z-index: 2;
-  opacity: 0.6;
-  transition: background 0.8s;
-  pointer-events: none;
-}
-
-/* Hidden title for SEO */
-.hero-title-hidden {
-  position: absolute;
-  width: 1px; height: 1px;
-  overflow: hidden;
-  clip: rect(0,0,0,0);
-  white-space: nowrap;
-}
-
-/* Canvas oscilloscope overlaid on grille */
-.amp-grille-canvas {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  opacity: 0.15;
-  transition: opacity 0.6s;
-}
-
-/* Gold piping between grille and control strip */
-.amp-piping-mid {
-  height: 2px;
-  background: linear-gradient(90deg,
-    rgba(197, 164, 78, 0.03),
-    rgba(197, 164, 78, 0.15) 15%,
-    rgba(197, 164, 78, 0.25) 50%,
-    rgba(197, 164, 78, 0.15) 85%,
-    rgba(197, 164, 78, 0.03)
-  );
-  position: relative;
-  z-index: 5;
-  box-shadow: 0 0 8px rgba(197, 164, 78, 0.06);
-}
-
-/* ── Control strip — the heart ── */
-.amp-control-strip {
-  display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(2rem, 5vw, 5rem);
-  padding: 1.5rem 4rem;
-  background: linear-gradient(180deg, #16140f 0%, #111010 50%, #0e0d0a 100%);
   position: relative;
-  z-index: 4;
+  z-index: 1;
+  padding: 8rem 2rem 4rem;
+  overflow: hidden;
 }
 
-/* ── Input jack (decorative) ── */
-.amp-input-jack {
-  width: 24px; height: 24px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, #3a3530, #1a1816 60%, #0e0d0a);
-  border: 2px solid #2a2520;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8), 0 1px 2px rgba(0,0,0,0.5);
-  flex-shrink: 0;
-  position: relative;
-}
-.amp-input-jack::after {
-  content: '';
+.hero-glow {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: #0a0908;
-  border: 1px solid #2a2520;
+  width: 1000px; height: 1000px;
+  background: radial-gradient(circle, var(--theme-glow) 0%, transparent 60%);
+  pointer-events: none;
+  transition: background 0.8s ease;
+  opacity: 0.7;
 }
 
-.amp-jack-label {
+.hero-pretitle {
   font-family: var(--font-mono);
-  font-size: 0.45rem;
-  letter-spacing: 0.15em;
+  font-size: 0.7rem;
+  letter-spacing: 0.4em;
   text-transform: uppercase;
-  color: var(--m-gold-dim);
-  opacity: 0.35;
-  text-align: center;
-  margin-top: 0.35rem;
+  color: var(--v-muted);
+  opacity: 0;
+  animation: fadeUp 1s 0.3s ease forwards;
+  position: relative;
+  z-index: 2;
 }
-
-.amp-jack-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-/* ── Pilot light ── */
-.pilot-light {
+.hero-pretitle .vintage-text { color: var(--v-amber); }
+.hero-pretitle .future-text { color: var(--f-cyan); }
+.hero-pretitle .separator {
   display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--m-gold);
-  box-shadow: 0 0 6px var(--m-gold), 0 0 14px rgba(197, 164, 78, 0.4);
-  animation: pilotPulse 3s ease-in-out infinite;
+  width: 30px; height: 1px;
+  background: linear-gradient(90deg, var(--v-amber), var(--f-cyan));
   vertical-align: middle;
+  margin: 0 0.75rem;
 }
 
-.amp-pilot-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-  flex-shrink: 0;
-}
-.amp-pilot-label {
-  font-family: var(--font-mono);
-  font-size: 0.45rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--m-gold-dim);
-  opacity: 0.35;
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(5rem, 14vw, 12rem);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  position: relative;
+  z-index: 2;
+  opacity: 0;
+  animation: heroReveal 1.2s 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* ── Dial in control strip ── */
+.hero-title-main {
+  display: block;
+  background: linear-gradient(180deg, var(--v-cream) 30%, var(--v-amber) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 4px 40px rgba(212, 160, 40, 0.2));
+  transition: filter 0.8s;
+}
+
+.hero-title-glitch {
+  position: absolute;
+  top: 0; left: 0;
+  display: block;
+  background: linear-gradient(180deg, var(--f-cyan) 30%, var(--f-magenta) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  opacity: 0;
+  transition: opacity 0.4s;
+  clip-path: polygon(0 0, 100% 0, 100% 15%, 0 15%, 0 40%, 100% 40%, 100% 55%, 0 55%, 0 80%, 100% 80%, 100% 100%, 0 100%);
+}
+
+.hero-tagline {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  font-weight: 400;
+  color: var(--v-cream-dim);
+  margin-top: 2rem;
+  letter-spacing: 0.05em;
+  opacity: 0;
+  animation: fadeUp 1s 0.8s ease forwards;
+  position: relative;
+  z-index: 2;
+}
+
 .dial-wrapper {
   position: relative;
+  margin-top: 4rem;
+  opacity: 0;
+  animation: dialEntrance 1.5s 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
 .dial-outer-ring {
   position: absolute;
-  top: -15px; left: -15px; right: -15px; bottom: -15px;
+  top: -30px; left: -30px; right: -30px; bottom: -30px;
   border-radius: 50%;
-  border: 1px solid rgba(197, 164, 78, 0.08);
+  border: 1px solid rgba(212, 160, 40, 0.15);
   transition: border-color 0.8s, box-shadow 0.8s;
   animation: ringPulse 4s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.dial-knob-container {
-  position: relative;
 }
 
 .dial-svg {
-  width: clamp(160px, 18vw, 220px);
-  height: clamp(160px, 18vw, 220px);
+  width: 320px; height: 320px;
   cursor: grab;
   user-select: none;
-  filter: drop-shadow(0 0 30px rgba(197, 164, 78, 0.08));
+  filter: drop-shadow(0 0 60px rgba(212, 160, 40, 0.15));
   transition: filter 0.8s;
 }
 .dial-svg:active { cursor: grabbing; }
 
-/* Zone label + value below dial */
-.dial-readout {
-  text-align: center;
-  margin-top: 0.5rem;
-}
-
 .dial-zone-label {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.25em;
+  font-size: 0.85rem;
+  letter-spacing: 0.3em;
+  text-align: center;
+  margin-top: 1.5rem;
   text-transform: uppercase;
-  min-height: 1.2em;
+  min-height: 1.4em;
   transition: color 0.3s;
 }
 
 .dial-value {
   font-family: var(--font-mono);
-  font-size: 1.3rem;
+  font-size: 2rem;
   font-weight: 700;
-  color: var(--v-cream);
-  transition: color 0.3s;
-  line-height: 1.2;
-}
-
-.dial-silk-label {
-  font-family: var(--font-mono);
-  font-size: 0.45rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--m-gold-dim);
-  opacity: 0.35;
-  margin-top: 0.2rem;
-}
-
-/* ── Zone display (adjacent to dial) ── */
-.amp-zone-display {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-  flex-shrink: 0;
-}
-
-.zone-indicator-bar {
-  display: flex;
-  gap: 3px;
-}
-.zone-indicator-dot {
-  width: 5px; height: 5px;
-  border-radius: 50%;
-  background: var(--v-raised);
-  border: 1px solid rgba(255,255,255,0.04);
-  transition: background 0.3s, box-shadow 0.3s;
-}
-.zone-indicator-dot.active {
-  background: var(--zone-dot-color, var(--m-gold));
-  box-shadow: 0 0 6px var(--zone-dot-color, var(--m-gold));
-}
-
-.amp-zone-label-text {
-  font-family: var(--font-mono);
-  font-size: 0.45rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--m-gold-dim);
-  opacity: 0.35;
-}
-
-/* Gold piping below controls */
-.amp-piping-bottom {
-  height: 2px;
-  background: linear-gradient(90deg,
-    rgba(197, 164, 78, 0.03),
-    rgba(197, 164, 78, 0.12) 15%,
-    rgba(197, 164, 78, 0.18) 50%,
-    rgba(197, 164, 78, 0.12) 85%,
-    rgba(197, 164, 78, 0.03)
-  );
-  position: relative;
-  z-index: 3;
-}
-
-/* ── Bottom bar ── */
-.amp-bottom-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 1.5rem 4rem 3rem;
-  background: linear-gradient(180deg, #0e0d0a 0%, var(--v-black) 100%);
-  position: relative;
-  z-index: 3;
-}
-
-.amp-tagline {
-  font-family: var(--font-heading);
-  font-size: clamp(0.8rem, 1.5vw, 1rem);
-  font-weight: 400;
-  color: var(--v-cream-dim);
-  letter-spacing: 0.08em;
   text-align: center;
-}
-.amp-tagline-separator {
-  color: var(--m-gold-dim);
-  opacity: 0.3;
-  margin: 0 0.4rem;
+  color: var(--v-cream);
+  margin-top: 0.25rem;
+  transition: color 0.3s;
 }
 
-/* ── Drag hint below amp ── */
 .dial-hint {
-  position: absolute;
-  bottom: 5rem;
-  left: 50%;
-  transform: translateX(-50%);
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   color: var(--v-muted);
   text-align: center;
+  margin-top: 1rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   opacity: 0;
-  animation: fadeUp 1s 2s ease forwards;
-  z-index: 6;
+  animation: fadeUp 1s 1.5s ease forwards;
 }
 
 .dial-hint-arrow {
@@ -625,32 +416,27 @@ nav.scrolled {
 
 .hero-scroll {
   position: absolute;
-  bottom: 1.5rem;
+  bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
   opacity: 0;
-  animation: fadeUp 1s 2.5s ease forwards;
-  z-index: 6;
+  animation: fadeUp 1s 2s ease forwards;
+  z-index: 2;
 }
 .scroll-indicator {
-  width: 22px; height: 36px;
+  width: 24px; height: 40px;
   border: 1.5px solid var(--v-muted);
-  border-radius: 11px;
+  border-radius: 12px;
   position: relative;
 }
 .scroll-dot {
-  width: 3px; height: 7px;
-  background: var(--m-gold);
+  width: 3px; height: 8px;
+  background: var(--v-amber);
   border-radius: 2px;
   position: absolute;
-  top: 7px; left: 50%;
+  top: 8px; left: 50%;
   transform: translateX(-50%);
   animation: scrollDot 2s ease-in-out infinite;
-}
-
-/* Glitch layer (hidden) */
-.hero-title-glitch {
-  display: none;
 }
 
 /* ═══════════ SECTION COMMONS ═══════════ */
@@ -678,7 +464,7 @@ section {
   flex: 1;
   max-width: 60px;
   height: 1px;
-  background: var(--m-gold-dim);
+  background: var(--v-muted);
 }
 
 .section-title {
@@ -711,6 +497,7 @@ section {
   transform: translateY(0);
 }
 
+/* Staggered reveal children */
 .stagger-reveal > * {
   opacity: 0;
   transform: translateY(30px);
@@ -720,57 +507,38 @@ section {
 .stagger-reveal.visible > * { opacity: 1; transform: translateY(0); }
 .stagger-reveal.visible > *:nth-child(1) { transition-delay: 0s; }
 .stagger-reveal.visible > *:nth-child(2) { transition-delay: 0.1s; }
-.stagger-reveal.visible > *:nth-child(3) { transition-delay: 0.15s; }
-.stagger-reveal.visible > *:nth-child(4) { transition-delay: 0.2s; }
-.stagger-reveal.visible > *:nth-child(5) { transition-delay: 0.25s; }
-.stagger-reveal.visible > *:nth-child(6) { transition-delay: 0.3s; }
+.stagger-reveal.visible > *:nth-child(3) { transition-delay: 0.2s; }
+.stagger-reveal.visible > *:nth-child(4) { transition-delay: 0.3s; }
+.stagger-reveal.visible > *:nth-child(5) { transition-delay: 0.4s; }
+.stagger-reveal.visible > *:nth-child(6) { transition-delay: 0.5s; }
 
-/* ═══════════ DIVIDER — Gold piping style ═══════════ */
+/* ═══════════ DIVIDER — Animated gradient line ═══════════ */
 .section-divider {
   position: relative;
   z-index: 1;
-  height: 3px;
+  height: 1px;
   max-width: 1300px;
   margin: 0 auto;
   overflow: hidden;
-  background: linear-gradient(90deg,
-    transparent,
-    rgba(197, 164, 78, 0.06) 15%,
-    rgba(197, 164, 78, 0.12) 50%,
-    rgba(197, 164, 78, 0.06) 85%,
-    transparent
-  );
-  border-radius: 2px;
 }
 .section-divider::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(197, 164, 78, 0.15), transparent);
-  opacity: 0.5;
+  background: linear-gradient(90deg, transparent, var(--v-muted), transparent);
+  opacity: 0.2;
 }
 .section-divider::after {
   content: '';
   position: absolute;
   top: 0; left: -30%;
   width: 30%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(197, 164, 78, 0.6), transparent);
+  background: linear-gradient(90deg, transparent, var(--v-amber), transparent);
   animation: dividerSweep 4s ease-in-out infinite;
 }
 
-/* Chrome rivet decorator */
-.chrome-rivet {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #e8e0d0, #8a8070 40%, #5a5248 100%);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.15);
-  flex-shrink: 0;
-}
-
 /* ═══════════════════════════════════════════════
-   ZONES — Full-width immersive cards with grille cloth
+   ZONES — Full-width immersive cards
    ═══════════════════════════════════════════════ */
 .zones-section {
   position: relative;
@@ -789,6 +557,7 @@ section {
 .zones-header .section-number::after { display: none; }
 .zones-header .section-desc { margin: 0 auto; }
 
+/* Horizontal scroll container */
 .zones-track-wrapper {
   position: relative;
   width: 100%;
@@ -814,6 +583,7 @@ section {
 }
 .zone-card:hover { flex: 1.8; }
 
+/* Full-bleed animated background per zone */
 .zone-bg {
   position: absolute;
   inset: 0;
@@ -821,17 +591,7 @@ section {
   overflow: hidden;
 }
 
-/* Grille cloth overlay on zone cards */
-.zone-bg::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle, rgba(197, 164, 78, 0.08) 0.5px, transparent 0.5px);
-  background-size: 5px 5px;
-  opacity: 0.4;
-  pointer-events: none;
-}
-
+/* Unique gradient per zone */
 .zone-card[data-zone="clean"] .zone-bg {
   background: linear-gradient(180deg, #0a120a 0%, #0d1a0d 50%, #0a0908 100%);
 }
@@ -848,6 +608,7 @@ section {
   background: linear-gradient(180deg, #1a0808 0%, #1f0a0a 50%, #0a0908 100%);
 }
 
+/* Canvas for oscilloscope in each zone */
 .zone-oscilloscope {
   position: absolute;
   inset: 0;
@@ -870,6 +631,7 @@ section {
 }
 .zone-card:hover::before { width: 3px; opacity: 0.8; }
 
+/* Bottom gradient fade for text readability */
 .zone-card::after {
   content: '';
   position: absolute;
@@ -884,20 +646,6 @@ section {
   position: relative;
   z-index: 3;
 }
-
-/* Pilot light LED in zone cards */
-.zone-pilot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--zone-color);
-  box-shadow: 0 0 4px var(--zone-color), 0 0 10px var(--zone-color);
-  margin-bottom: 0.75rem;
-  animation: pilotPulse 3s ease-in-out infinite;
-  opacity: 0.6;
-  transition: opacity 0.4s;
-}
-.zone-card:hover .zone-pilot { opacity: 1; }
 
 .zone-number {
   font-family: var(--font-mono);
@@ -942,6 +690,7 @@ section {
 }
 .zone-card:hover .zone-desc { opacity: 1; transform: translateY(0); }
 
+/* Frequency spectrum visualization per zone */
 .zone-spectrum {
   display: flex;
   gap: 2px;
@@ -963,7 +712,7 @@ section {
 }
 
 /* ═══════════════════════════════════════════════
-   SIGNAL CHAIN — with circuit aesthetics
+   SIGNAL CHAIN — Cinematic visual journey
    ═══════════════════════════════════════════════ */
 .signal-section {
   overflow: hidden;
@@ -978,6 +727,7 @@ section {
   margin: 0 auto;
 }
 
+/* Animated circuit board background */
 .circuit-bg {
   position: absolute;
   inset: 0;
@@ -990,12 +740,14 @@ section {
   opacity: 0.06;
 }
 
+/* Full-width signal path visualization */
 .signal-path {
   position: relative;
   margin-top: 5rem;
   padding: 3rem 0;
 }
 
+/* The animated line that connects all nodes */
 .signal-wire {
   position: absolute;
   top: 50%;
@@ -1007,11 +759,12 @@ section {
 .signal-wire-bg {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, var(--z-clean), var(--m-gold), var(--f-cyan));
+  background: linear-gradient(90deg, var(--z-clean), var(--v-amber), var(--f-cyan));
   opacity: 0.12;
   border-radius: 1px;
 }
 
+/* Multiple animated pulses flowing through */
 .signal-pulse {
   position: absolute;
   top: -3px;
@@ -1022,10 +775,11 @@ section {
   animation: signalFlow var(--pulse-speed) linear infinite;
   animation-delay: var(--pulse-delay);
 }
-.signal-pulse:nth-child(2) { background: var(--m-gold); }
+.signal-pulse:nth-child(2) { background: var(--v-amber); }
 .signal-pulse:nth-child(3) { background: var(--f-cyan); }
-.signal-pulse:nth-child(4) { background: var(--m-gold); opacity: 0.5; }
+.signal-pulse:nth-child(4) { background: var(--v-amber); opacity: 0.5; }
 
+/* Nodes along the path */
 .signal-nodes {
   display: flex;
   justify-content: space-between;
@@ -1039,12 +793,13 @@ section {
   position: relative;
 }
 
+/* Glowing dot at connection point */
 .node-dot {
   width: 14px;
   height: 14px;
   border-radius: 50%;
   background: var(--v-raised);
-  border: 2px solid var(--node-color, var(--m-gold));
+  border: 2px solid var(--node-color, var(--v-amber));
   margin: 0 auto 1.5rem;
   position: relative;
   transition: all 0.4s;
@@ -1054,11 +809,11 @@ section {
   position: absolute;
   inset: -6px;
   border-radius: 50%;
-  border: 1px solid var(--node-color, var(--m-gold));
+  border: 1px solid var(--node-color, var(--v-amber));
   opacity: 0;
   transition: opacity 0.4s;
 }
-.signal-node:hover .node-dot { background: var(--node-color, var(--m-gold)); box-shadow: 0 0 20px var(--node-color, var(--m-gold)); }
+.signal-node:hover .node-dot { background: var(--node-color, var(--v-amber)); box-shadow: 0 0 20px var(--node-color, var(--v-amber)); }
 .signal-node:hover .node-dot::after { opacity: 0.3; }
 
 .node-icon {
@@ -1075,18 +830,19 @@ section {
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .signal-node:hover .node-icon {
-  border-color: var(--node-color, rgba(197, 164, 78, 0.3));
+  border-color: var(--node-color, rgba(212, 160, 40, 0.3));
   transform: translateY(-4px) scale(1.05);
-  box-shadow: 0 8px 30px rgba(0,0,0,0.4), 0 0 20px color-mix(in srgb, var(--node-color, var(--m-gold)) 20%, transparent);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4), 0 0 20px color-mix(in srgb, var(--node-color, var(--v-amber)) 20%, transparent);
 }
 
+/* NAM node — the star */
 .signal-node.nam-star .node-icon {
   width: 68px;
   height: 68px;
   border-radius: 16px;
   font-size: 1.6rem;
   background: linear-gradient(135deg, var(--v-panel), var(--v-dark));
-  border: 1px solid rgba(197, 164, 78, 0.15);
+  border: 1px solid rgba(212, 160, 40, 0.15);
   position: relative;
   overflow: hidden;
 }
@@ -1094,7 +850,7 @@ section {
   content: '';
   position: absolute;
   inset: 0;
-  background: conic-gradient(from 0deg, var(--m-gold), var(--f-cyan), var(--m-gold));
+  background: conic-gradient(from 0deg, var(--v-amber), var(--f-cyan), var(--v-amber));
   opacity: 0;
   transition: opacity 0.5s;
   filter: blur(8px);
@@ -1106,7 +862,7 @@ section {
   font-size: 0.6rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--node-color, var(--m-gold));
+  color: var(--node-color, var(--v-amber));
   margin-bottom: 0.3rem;
 }
 
@@ -1117,14 +873,20 @@ section {
 }
 
 /* ═══════════════════════════════════════════════
-   DEMOS — with vinyl record graphics
+   DEMOS — Immersive audio cards with live canvas
    ═══════════════════════════════════════════════ */
 .demos-section {
   position: relative;
   z-index: 1;
   padding: 8rem 2rem;
+  max-width: 100%;
+  overflow: hidden;
+}
+.demos-section-inner {
   max-width: 1300px;
   margin: 0 auto;
+  position: relative;
+  z-index: 1;
 }
 
 .demos-grid {
@@ -1148,114 +910,34 @@ section {
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
 
+/* Top color bar */
 .demo-card::before {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 2px;
-  background: var(--demo-color, var(--m-gold));
+  background: var(--demo-color, var(--v-amber));
   opacity: 0.4;
   transition: opacity 0.4s, height 0.4s, box-shadow 0.4s;
 }
 .demo-card:hover::before {
   opacity: 1;
   height: 3px;
-  box-shadow: 0 0 20px var(--demo-color, var(--m-gold));
+  box-shadow: 0 0 20px var(--demo-color, var(--v-amber));
 }
 
-/* Vinyl record graphic */
-.demo-vinyl-wrapper {
+/* Live animated waveform canvas background */
+.demo-canvas-bg {
   position: relative;
-  height: 160px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 120px;
   overflow: hidden;
   background: linear-gradient(180deg, rgba(10,9,8,0) 0%, var(--v-dark) 100%);
-}
-
-.demo-vinyl {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  position: relative;
-  animation: vinylSpin 8s linear infinite;
-  background: #0d0c0b;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.03),
-    0 4px 20px rgba(0,0,0,0.5);
-}
-
-/* Vinyl grooves */
-.demo-vinyl::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background:
-    repeating-radial-gradient(
-      circle at center,
-      transparent 0px,
-      transparent 1.5px,
-      rgba(255,255,255,0.025) 1.5px,
-      rgba(255,255,255,0.025) 2px,
-      transparent 2px,
-      transparent 3.5px
-    );
-  pointer-events: none;
-}
-
-/* Vinyl light sheen */
-.demo-vinyl::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: linear-gradient(135deg,
-    transparent 30%,
-    rgba(255,255,255,0.06) 45%,
-    transparent 55%
-  );
-  pointer-events: none;
-}
-
-/* Vinyl label */
-.demo-vinyl-label {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--demo-color, var(--m-gold));
-  opacity: 0.8;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Center hole */
-.demo-vinyl-label::after {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--v-black);
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.8);
-}
-
-/* Waveform canvas behind vinyl */
-.demo-canvas-bg {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
 }
 .demo-canvas-bg canvas {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.3;
 }
 
 .demo-body {
@@ -1274,17 +956,18 @@ section {
   font-size: 0.65rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--demo-color, var(--m-gold));
+  color: var(--demo-color, var(--v-amber));
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
+/* Pulsing dot */
 .demo-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--demo-color, var(--m-gold));
+  background: var(--demo-color, var(--v-amber));
   animation: dotPulse 2s ease-in-out infinite;
 }
 
@@ -1335,13 +1018,13 @@ section {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, var(--demo-color, var(--m-gold)), transparent);
+  background: linear-gradient(90deg, transparent, var(--demo-color, var(--v-amber)), transparent);
   opacity: 0;
   transition: opacity 0.4s;
 }
 .demo-play-btn:hover {
-  border-color: var(--demo-color, var(--m-gold));
-  color: var(--demo-color, var(--m-gold));
+  border-color: var(--demo-color, var(--v-amber));
+  color: var(--demo-color, var(--v-amber));
 }
 .demo-play-btn:hover::before { opacity: 0.08; }
 
@@ -1355,28 +1038,18 @@ section {
 }
 
 /* ═══════════════════════════════════════════════
-   SPECS — with chrome rivets and Marshall styling
+   SPECS — Holographic card grid
    ═══════════════════════════════════════════════ */
 .specs-section {
   background: var(--v-dark);
-  border-top: 2px solid rgba(197, 164, 78, 0.08);
-  border-bottom: 2px solid rgba(197, 164, 78, 0.08);
+  border-top: 1px solid rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
   position: relative;
   z-index: 1;
   overflow: hidden;
 }
 
-/* Grille cloth on specs background */
-.specs-section::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle, rgba(197, 164, 78, 0.04) 0.5px, transparent 0.5px);
-  background-size: 5px 5px;
-  pointer-events: none;
-  z-index: 0;
-}
-
+/* Perspective grid floor effect */
 .specs-grid-floor {
   position: absolute;
   bottom: 0;
@@ -1384,8 +1057,8 @@ section {
   right: 0;
   height: 50%;
   background:
-    linear-gradient(rgba(197, 164, 78, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(197, 164, 78, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(212, 160, 40, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212, 160, 40, 0.03) 1px, transparent 1px);
   background-size: 60px 60px;
   transform: perspective(500px) rotateX(60deg);
   transform-origin: center bottom;
@@ -1410,7 +1083,7 @@ section {
 
 .spec-card {
   background: rgba(18, 17, 16, 0.8);
-  border: 1px solid rgba(197, 164, 78, 0.06);
+  border: 1px solid rgba(255,255,255,0.04);
   border-radius: 12px;
   padding: 2.5rem 2rem;
   position: relative;
@@ -1428,7 +1101,7 @@ section {
   background: conic-gradient(
     from var(--shimmer-angle, 0deg),
     transparent 0%,
-    rgba(197, 164, 78, 0.06) 10%,
+    rgba(212, 160, 40, 0.06) 10%,
     transparent 20%,
     rgba(0, 212, 255, 0.04) 30%,
     transparent 40%
@@ -1439,40 +1112,30 @@ section {
 }
 .spec-card:hover::before { opacity: 1; }
 
-/* Corner accent with gold piping */
+/* Corner accent */
 .spec-card::after {
   content: '';
   position: absolute;
   top: 0; right: 0;
   width: 40px; height: 40px;
-  background: linear-gradient(225deg, var(--m-gold) 0%, transparent 60%);
+  background: linear-gradient(225deg, var(--v-amber) 0%, transparent 60%);
   opacity: 0;
   transition: opacity 0.4s;
 }
 .spec-card:hover::after { opacity: 0.15; }
 
 .spec-card:hover {
-  border-color: rgba(197, 164, 78, 0.15);
+  border-color: rgba(212, 160, 40, 0.1);
   transform: translateY(-6px);
   box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-}
-
-/* Chrome rivets on spec cards */
-.spec-rivets {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 12px;
-  pointer-events: none;
 }
 
 .spec-icon {
   width: 48px;
   height: 48px;
   border-radius: 10px;
-  background: rgba(197, 164, 78, 0.05);
-  border: 1px solid rgba(197, 164, 78, 0.08);
+  background: rgba(212, 160, 40, 0.05);
+  border: 1px solid rgba(212, 160, 40, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1483,8 +1146,8 @@ section {
   z-index: 1;
 }
 .spec-card:hover .spec-icon {
-  background: rgba(197, 164, 78, 0.1);
-  box-shadow: 0 0 25px rgba(197, 164, 78, 0.15);
+  background: rgba(212, 160, 40, 0.1);
+  box-shadow: 0 0 25px rgba(212, 160, 40, 0.15);
   transform: scale(1.05);
 }
 
@@ -1513,22 +1176,22 @@ section {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--v-muted);
-  background: rgba(197, 164, 78, 0.06);
+  background: rgba(212, 160, 40, 0.06);
   padding: 0.25rem 0.7rem;
   border-radius: 2px;
   margin-top: 1rem;
   position: relative;
   z-index: 1;
-  border: 1px solid rgba(197, 164, 78, 0.06);
+  border: 1px solid rgba(212, 160, 40, 0.06);
   transition: all 0.3s;
 }
 .spec-card:hover .spec-tag {
-  border-color: rgba(197, 164, 78, 0.2);
-  color: var(--m-gold);
+  border-color: rgba(212, 160, 40, 0.15);
+  color: var(--v-amber);
 }
 
 /* ═══════════════════════════════════════════════
-   CTA — Dramatic finale
+   CTA — Dramatic finale with particle burst
    ═══════════════════════════════════════════════ */
 .cta-section {
   text-align: center;
@@ -1538,12 +1201,14 @@ section {
   overflow: hidden;
 }
 
+/* Canvas for particle explosion effect */
 .cta-canvas {
   position: absolute;
   inset: 0;
   z-index: 0;
 }
 
+/* Multiple gradient orbs */
 .cta-orb {
   position: absolute;
   border-radius: 50%;
@@ -1553,7 +1218,7 @@ section {
 .cta-orb-1 {
   width: 500px; height: 500px;
   top: 20%; left: 30%;
-  background: radial-gradient(circle, rgba(197, 164, 78, 0.15), transparent 70%);
+  background: radial-gradient(circle, rgba(212, 160, 40, 0.15), transparent 70%);
   animation: orbFloat1 8s ease-in-out infinite;
 }
 .cta-orb-2 {
@@ -1598,7 +1263,7 @@ section {
 }
 
 .btn-primary {
-  background: var(--m-gold);
+  background: var(--v-amber);
   color: var(--v-black);
   font-family: var(--font-heading);
   font-weight: 600;
@@ -1626,9 +1291,9 @@ section {
 }
 .btn-primary:hover::before { transform: translateX(100%); }
 .btn-primary:hover {
-  background: var(--m-gold-bright);
+  background: var(--v-amber-light);
   transform: translateY(-3px);
-  box-shadow: 0 12px 40px rgba(197, 164, 78, 0.3);
+  box-shadow: 0 12px 40px var(--v-amber-glow);
 }
 
 .btn-secondary {
@@ -1649,13 +1314,13 @@ section {
   gap: 0.5rem;
 }
 .btn-secondary:hover {
-  border-color: var(--m-gold);
-  color: var(--m-gold);
-  background: rgba(197, 164, 78, 0.05);
+  border-color: var(--v-amber);
+  color: var(--v-amber);
+  background: rgba(212, 160, 40, 0.05);
 }
 
 .btn-primary:focus-visible, .btn-secondary:focus-visible {
-  outline: 2px solid var(--m-gold);
+  outline: 2px solid var(--v-amber);
   outline-offset: 3px;
 }
 
@@ -1667,7 +1332,7 @@ section {
   letter-spacing: 0.08em;
 }
 
-/* VU Meter decoration */
+/* VU Meter decoration — larger and more dramatic */
 .vu-decoration {
   display: flex;
   justify-content: center;
@@ -1685,25 +1350,14 @@ section {
   transition: background 0.3s;
 }
 
-/* ═══════════ FOOTER — with gold piping ═══════════ */
+/* ═══════════ FOOTER ═══════════ */
 footer {
   position: relative;
   z-index: 1;
-  border-top: 2px solid rgba(197, 164, 78, 0.08);
+  border-top: 1px solid rgba(255,255,255,0.03);
   padding: 3rem 2rem;
   max-width: 1300px;
   margin: 0 auto;
-}
-
-/* Grille cloth on footer */
-footer::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle, rgba(197, 164, 78, 0.04) 0.4px, transparent 0.4px);
-  background-size: 5px 5px;
-  pointer-events: none;
-  opacity: 0.3;
 }
 
 .footer-inner {
@@ -1712,14 +1366,13 @@ footer::before {
   align-items: center;
   flex-wrap: wrap;
   gap: 1.5rem;
-  position: relative;
 }
 
 .footer-brand {
   font-family: var(--font-display);
   font-size: 1.1rem;
   font-style: italic;
-  color: var(--m-gold);
+  color: var(--v-amber);
 }
 
 .footer-links {
@@ -1736,17 +1389,16 @@ footer::before {
   text-transform: uppercase;
   transition: color 0.3s;
 }
-.footer-links a:hover { color: var(--m-gold); }
+.footer-links a:hover { color: var(--v-amber); }
 
 .footer-copy {
   width: 100%;
   text-align: center;
   margin-top: 2rem;
   padding-top: 2rem;
-  border-top: 1px solid rgba(197, 164, 78, 0.06);
+  border-top: 1px solid rgba(255,255,255,0.03);
   font-size: 0.72rem;
   color: var(--v-muted);
-  position: relative;
 }
 
 /* ═══════════ ANIMATIONS ═══════════ */
@@ -1756,10 +1408,6 @@ footer::before {
 }
 @keyframes heroReveal {
   from { opacity: 0; transform: translateY(50px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes ampReveal {
-  from { opacity: 0; transform: translateY(30px) scale(0.97); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 @keyframes dialEntrance {
@@ -1820,14 +1468,6 @@ footer::before {
   0%, 100% { transform: translate(0, 0); }
   50% { transform: translate(25px, -30px); }
 }
-@keyframes pilotPulse {
-  0%, 100% { opacity: 0.5; box-shadow: 0 0 4px currentColor, 0 0 8px currentColor; }
-  50% { opacity: 1; box-shadow: 0 0 8px currentColor, 0 0 16px currentColor, 0 0 24px currentColor; }
-}
-@keyframes vinylSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
 
 /* ═══════════ RESPONSIVE ═══════════ */
 @media (max-width: 1000px) {
@@ -1845,11 +1485,8 @@ footer::before {
   .nav-hamburger { display: flex; }
 
   section, .demos-section { padding: 5rem 1.25rem; }
-  .hero { padding: 0; }
-  .amp-logo-bar { padding: 5rem 1.5rem 0.8rem; }
-  .amp-control-strip { padding: 1.2rem 1rem; gap: 1.2rem; }
-  .amp-jack-group, .amp-pilot-group { display: none; }
-  .amp-bottom-bar { padding: 1rem 1.5rem 2.5rem; }
+  .hero { padding: 6rem 1.25rem 4rem; }
+  .dial-svg { width: 260px; height: 260px; }
 
   .zones-section { padding: 5rem 0; }
   .zones-track { flex-direction: column; }
@@ -1870,9 +1507,8 @@ footer::before {
 }
 
 @media (max-width: 480px) {
-  .amp-brand { font-size: 2rem; }
-  .amp-model { font-size: 0.5rem; }
-  .amp-control-strip { gap: 0.8rem; padding: 1rem 0.75rem; }
+  .hero-title { font-size: clamp(3.5rem, 16vw, 5rem); }
+  .dial-svg { width: 220px; height: 220px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1884,13 +1520,11 @@ footer::before {
   html { scroll-behavior: auto; }
   .signal-pulse, .signal-line-pulse { display: none; }
   .reveal, .stagger-reveal > * { opacity: 1; transform: none; }
-  .demo-vinyl { animation: none; }
 }
 </style>
 </head>
 <body>
 
-<div class="tolex-texture"></div>
 <canvas id="bgCanvas"></canvas>
 
 <!-- ═══════════ NAV ═══════════ -->
@@ -1916,117 +1550,66 @@ footer::before {
   <a href="#download" class="nav-cta">Download</a>
 </div>
 
-<!-- ═══════════ HERO — AMP HEAD ═══════════ -->
+<!-- ═══════════ HERO ═══════════ -->
 <section class="hero">
-  <h1 class="hero-title-hidden">OneDial — One Knob. Five Zones. Infinite Tone.</h1>
+  <div class="photo-bg hero-photo"></div>
+  <div class="hero-glow" id="heroGlow"></div>
 
-  <div class="amp-body">
-    <!-- Logo bar -->
-    <div class="amp-logo-bar">
-      <span class="corner-rivet"></span>
-      <span class="corner-rivet"></span>
-      <div class="amp-brand">OneDial</div>
-      <div class="amp-model">
-        NAM Engine
-        <span class="amp-model-line">Neural Amp Modeler</span>
-      </div>
-    </div>
-
-    <div class="amp-piping-top"></div>
-
-    <!-- Grille cloth -->
-    <div class="amp-grille">
-      <div class="amp-grille-cloth"></div>
-      <div class="amp-grille-glow" id="heroGlow"></div>
-      <canvas class="amp-grille-canvas" id="grilleCanvas"></canvas>
-    </div>
-
-    <div class="amp-piping-mid"></div>
-
-    <!-- Control strip -->
-    <div class="amp-control-strip">
-      <div class="amp-jack-group">
-        <div class="amp-input-jack"></div>
-        <div class="amp-jack-label">Input</div>
-      </div>
-
-      <div class="amp-pilot-group">
-        <span class="pilot-light" id="pilotLight"></span>
-        <div class="amp-pilot-label">Power</div>
-      </div>
-
-      <div class="dial-wrapper">
-        <div class="dial-knob-container">
-          <div class="dial-outer-ring" id="dialRing"></div>
-          <svg class="dial-svg" id="dial" viewBox="0 0 320 320">
-            <defs>
-              <radialGradient id="dialFace" cx="50%" cy="42%" r="50%">
-                <stop offset="0%" stop-color="#3a3530"/>
-                <stop offset="100%" stop-color="#161412"/>
-              </radialGradient>
-              <radialGradient id="dialHighlight" cx="38%" cy="32%" r="50%">
-                <stop offset="0%" stop-color="rgba(255,255,255,0.05)"/>
-                <stop offset="100%" stop-color="transparent"/>
-              </radialGradient>
-              <filter id="dialShadow">
-                <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.6"/>
-              </filter>
-              <filter id="pointerGlow">
-                <feGaussianBlur stdDeviation="3" result="blur"/>
-                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-              </filter>
-            </defs>
-            <circle cx="160" cy="160" r="150" fill="none" stroke="#2a2520" stroke-width="2" opacity="0.5"/>
-            <circle cx="160" cy="160" r="148" fill="none" stroke="#0a0908" stroke-width="1"/>
-            <g id="zoneArcs"></g>
-            <g id="ticks" stroke-linecap="round"></g>
-            <circle cx="160" cy="160" r="80" fill="url(#dialFace)" filter="url(#dialShadow)"/>
-            <circle cx="160" cy="160" r="80" fill="url(#dialHighlight)"/>
-            <circle cx="160" cy="160" r="80" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
-            <g id="gripLines" opacity="0.12"></g>
-            <g id="pointer" filter="url(#pointerGlow)">
-              <line x1="160" y1="160" x2="160" y2="88" stroke="#c5a44e" stroke-width="3" stroke-linecap="round"/>
-              <circle cx="160" cy="92" r="4" fill="#c5a44e"/>
-            </g>
-            <circle cx="160" cy="160" r="14" fill="#2a2520"/>
-            <circle cx="160" cy="160" r="12" fill="#161412"/>
-            <circle cx="160" cy="160" r="5" fill="rgba(197,164,78,0.2)"/>
-          </svg>
-        </div>
-        <div class="dial-readout">
-          <div class="dial-zone-label" id="dialZoneLabel">CRUNCH</div>
-          <div class="dial-value" id="dialValue">5.0</div>
-          <div class="dial-silk-label">Tone</div>
-        </div>
-      </div>
-
-      <div class="amp-zone-display" id="zoneDisplay">
-        <div class="zone-indicator-bar" id="zoneIndicatorBar">
-          <span class="zone-indicator-dot" data-zone="clean" style="--zone-dot-color: var(--z-clean);"></span>
-          <span class="zone-indicator-dot" data-zone="warm" style="--zone-dot-color: var(--z-warm);"></span>
-          <span class="zone-indicator-dot active" data-zone="crunch" style="--zone-dot-color: var(--z-crunch);"></span>
-          <span class="zone-indicator-dot" data-zone="drive" style="--zone-dot-color: var(--z-drive);"></span>
-          <span class="zone-indicator-dot" data-zone="lead" style="--zone-dot-color: var(--z-lead);"></span>
-        </div>
-        <div class="amp-zone-label-text">Zone</div>
-      </div>
-
-      <div class="amp-jack-group">
-        <div class="amp-input-jack"></div>
-        <div class="amp-jack-label">Output</div>
-      </div>
-    </div>
-
-    <div class="amp-piping-bottom"></div>
-
-    <!-- Bottom bar -->
-    <div class="amp-bottom-bar">
-      <span class="amp-tagline">One knob<span class="amp-tagline-separator">/</span>Five zones<span class="amp-tagline-separator">/</span>Infinite tone</span>
-    </div>
+  <div class="hero-pretitle">
+    <span class="vintage-text">Real Amps</span>
+    <span class="separator"></span>
+    <span class="future-text">Neural Modeled</span>
   </div>
 
-  <div class="dial-hint">
-    <span class="dial-hint-arrow">&#8597;</span> Drag the knob to morph the atmosphere
+  <h1 class="hero-title">
+    <span class="hero-title-main">OneDial</span>
+    <span class="hero-title-glitch" id="titleGlitch" aria-hidden="true">OneDial</span>
+  </h1>
+
+  <p class="hero-tagline">One knob. Five zones. Infinite tone.</p>
+
+  <div class="dial-wrapper">
+    <div class="dial-outer-ring" id="dialRing"></div>
+    <svg class="dial-svg" id="dial" viewBox="0 0 320 320">
+      <defs>
+        <radialGradient id="dialFace" cx="50%" cy="42%" r="50%">
+          <stop offset="0%" stop-color="#3a3530"/>
+          <stop offset="100%" stop-color="#161412"/>
+        </radialGradient>
+        <radialGradient id="dialHighlight" cx="38%" cy="32%" r="50%">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.05)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient>
+        <filter id="dialShadow">
+          <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#000" flood-opacity="0.6"/>
+        </filter>
+        <filter id="pointerGlow">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <circle cx="160" cy="160" r="150" fill="none" stroke="#2a2520" stroke-width="2" opacity="0.5"/>
+      <circle cx="160" cy="160" r="148" fill="none" stroke="#0a0908" stroke-width="1"/>
+      <g id="zoneArcs"></g>
+      <g id="ticks" stroke-linecap="round"></g>
+      <circle cx="160" cy="160" r="80" fill="url(#dialFace)" filter="url(#dialShadow)"/>
+      <circle cx="160" cy="160" r="80" fill="url(#dialHighlight)"/>
+      <circle cx="160" cy="160" r="80" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+      <g id="gripLines" opacity="0.12"></g>
+      <g id="pointer" filter="url(#pointerGlow)">
+        <line x1="160" y1="160" x2="160" y2="88" stroke="#d4a028" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="160" cy="92" r="4" fill="#d4a028"/>
+      </g>
+      <circle cx="160" cy="160" r="14" fill="#2a2520"/>
+      <circle cx="160" cy="160" r="12" fill="#161412"/>
+      <circle cx="160" cy="160" r="5" fill="rgba(212,160,40,0.2)"/>
+    </svg>
+
+    <div class="dial-zone-label" id="dialZoneLabel">CRUNCH</div>
+    <div class="dial-value" id="dialValue">5.0</div>
+    <div class="dial-hint">
+      <span class="dial-hint-arrow">&#8597;</span> Drag to morph the atmosphere
+    </div>
   </div>
 
   <div class="hero-scroll">
@@ -2049,7 +1632,6 @@ footer::before {
       <div class="zone-bg"></div>
       <canvas class="zone-oscilloscope" data-zone="clean"></canvas>
       <div class="zone-content">
-        <div class="zone-pilot"></div>
         <div class="zone-number">01</div>
         <div class="zone-name">Clean</div>
         <div class="zone-range">Dial 0 &mdash; 2</div>
@@ -2061,7 +1643,6 @@ footer::before {
       <div class="zone-bg"></div>
       <canvas class="zone-oscilloscope" data-zone="warm"></canvas>
       <div class="zone-content">
-        <div class="zone-pilot"></div>
         <div class="zone-number">02</div>
         <div class="zone-name">Warm</div>
         <div class="zone-range">Dial 2 &mdash; 4</div>
@@ -2073,7 +1654,6 @@ footer::before {
       <div class="zone-bg"></div>
       <canvas class="zone-oscilloscope" data-zone="crunch"></canvas>
       <div class="zone-content">
-        <div class="zone-pilot"></div>
         <div class="zone-number">03</div>
         <div class="zone-name">Crunch</div>
         <div class="zone-range">Dial 4 &mdash; 6</div>
@@ -2085,7 +1665,6 @@ footer::before {
       <div class="zone-bg"></div>
       <canvas class="zone-oscilloscope" data-zone="drive"></canvas>
       <div class="zone-content">
-        <div class="zone-pilot"></div>
         <div class="zone-number">04</div>
         <div class="zone-name">Drive</div>
         <div class="zone-range">Dial 6 &mdash; 8</div>
@@ -2097,7 +1676,6 @@ footer::before {
       <div class="zone-bg"></div>
       <canvas class="zone-oscilloscope" data-zone="lead"></canvas>
       <div class="zone-content">
-        <div class="zone-pilot"></div>
         <div class="zone-number">05</div>
         <div class="zone-name">Lead</div>
         <div class="zone-range">Dial 8 &mdash; 10</div>
@@ -2112,6 +1690,7 @@ footer::before {
 
 <!-- ═══════════ SIGNAL CHAIN — Visual journey ═══════════ -->
 <div class="signal-section" id="how-it-works">
+  <div class="photo-bg signal-photo"></div>
   <div class="circuit-bg"><canvas id="circuitCanvas"></canvas></div>
   <div class="signal-section-inner">
     <div class="section-number reveal">02 &mdash; Signal Chain</div>
@@ -2121,9 +1700,9 @@ footer::before {
     <div class="signal-path reveal">
       <div class="signal-wire">
         <div class="signal-wire-bg"></div>
-        <div class="signal-pulse" style="--pulse-speed: 2.5s; --pulse-delay: 0s; background: var(--m-gold);"></div>
+        <div class="signal-pulse" style="--pulse-speed: 2.5s; --pulse-delay: 0s; background: var(--v-amber);"></div>
         <div class="signal-pulse" style="--pulse-speed: 3s; --pulse-delay: 1s; background: var(--f-cyan);"></div>
-        <div class="signal-pulse" style="--pulse-speed: 3.5s; --pulse-delay: 2s; background: var(--m-gold); opacity: 0.4;"></div>
+        <div class="signal-pulse" style="--pulse-speed: 3.5s; --pulse-delay: 2s; background: var(--v-amber); opacity: 0.4;"></div>
       </div>
 
       <div class="signal-nodes stagger-reveal" id="signalNodes">
@@ -2139,7 +1718,7 @@ footer::before {
           <div class="node-label">Noise Gate</div>
           <div class="node-detail">Silence between notes</div>
         </div>
-        <div class="signal-node nam-star" style="--node-color: var(--m-gold);">
+        <div class="signal-node nam-star" style="--node-color: var(--v-amber);">
           <div class="node-dot"></div>
           <div class="node-icon">&#129504;</div>
           <div class="node-label">NAM Zones</div>
@@ -2164,20 +1743,17 @@ footer::before {
 
 <div class="section-divider"></div>
 
-<!-- ═══════════ DEMOS — with vinyl records ═══════════ -->
+<!-- ═══════════ DEMOS — Live canvas waveforms ═══════════ -->
 <section class="demos-section" id="demos">
+  <div class="photo-bg demos-photo"></div>
+  <div class="demos-section-inner">
   <div class="section-number reveal">03 &mdash; Listen</div>
   <h2 class="section-title reveal">Don't take our<br>word for it</h2>
   <p class="section-desc reveal">Audio demos dropping soon. Five zones, five characters — from studio-polished cleans to face-melting gain.</p>
 
   <div class="demos-grid stagger-reveal" id="demosGrid">
     <div class="demo-card" style="--demo-color: var(--z-clean);">
-      <div class="demo-vinyl-wrapper">
-        <div class="demo-canvas-bg"><canvas data-demo="clean"></canvas></div>
-        <div class="demo-vinyl">
-          <div class="demo-vinyl-label" style="background: var(--z-clean);"></div>
-        </div>
-      </div>
+      <div class="demo-canvas-bg"><canvas data-demo="clean"></canvas></div>
       <div class="demo-body">
         <div class="demo-header">
           <span class="demo-zone-tag"><span class="demo-dot"></span> Clean</span>
@@ -2189,12 +1765,7 @@ footer::before {
       </div>
     </div>
     <div class="demo-card" style="--demo-color: var(--z-crunch);">
-      <div class="demo-vinyl-wrapper">
-        <div class="demo-canvas-bg"><canvas data-demo="crunch"></canvas></div>
-        <div class="demo-vinyl">
-          <div class="demo-vinyl-label" style="background: var(--z-crunch);"></div>
-        </div>
-      </div>
+      <div class="demo-canvas-bg"><canvas data-demo="crunch"></canvas></div>
       <div class="demo-body">
         <div class="demo-header">
           <span class="demo-zone-tag"><span class="demo-dot"></span> Crunch</span>
@@ -2206,12 +1777,7 @@ footer::before {
       </div>
     </div>
     <div class="demo-card" style="--demo-color: var(--z-lead);">
-      <div class="demo-vinyl-wrapper">
-        <div class="demo-canvas-bg"><canvas data-demo="lead"></canvas></div>
-        <div class="demo-vinyl">
-          <div class="demo-vinyl-label" style="background: var(--z-lead);"></div>
-        </div>
-      </div>
+      <div class="demo-canvas-bg"><canvas data-demo="lead"></canvas></div>
       <div class="demo-body">
         <div class="demo-header">
           <span class="demo-zone-tag"><span class="demo-dot"></span> Lead</span>
@@ -2223,10 +1789,12 @@ footer::before {
       </div>
     </div>
   </div>
+  </div>
 </section>
 
-<!-- ═══════════ SPECS — with chrome rivets ═══════════ -->
+<!-- ═══════════ SPECS — Holographic cards ═══════════ -->
 <div class="specs-section" id="specs">
+  <div class="photo-bg specs-photo"></div>
   <div class="specs-grid-floor"></div>
   <div class="specs-inner">
     <div class="section-number reveal">04 &mdash; Technical</div>
@@ -2235,42 +1803,36 @@ footer::before {
 
     <div class="specs-grid stagger-reveal" id="specsGrid">
       <div class="spec-card">
-        <div class="spec-rivets"><span class="chrome-rivet"></span><span class="chrome-rivet"></span></div>
         <div class="spec-icon">&#63743;</div>
         <div class="spec-name">macOS Native</div>
         <div class="spec-value">Built for macOS 12+ with native Apple Silicon support.</div>
         <span class="spec-tag">Audio Unit</span>
       </div>
       <div class="spec-card">
-        <div class="spec-rivets"><span class="chrome-rivet"></span><span class="chrome-rivet"></span></div>
         <div class="spec-icon">&#129504;</div>
         <div class="spec-name">Neural Amp Modeling</div>
         <div class="spec-value">Powered by NeuralAmpModelerCore. Five trained neural networks capture real amp behavior.</div>
         <span class="spec-tag">NAM Engine</span>
       </div>
       <div class="spec-card">
-        <div class="spec-rivets"><span class="chrome-rivet"></span><span class="chrome-rivet"></span></div>
         <div class="spec-icon">&#9881;</div>
         <div class="spec-name">JUCE 8 Framework</div>
         <div class="spec-value">Professional plugin framework. Logic Pro, GarageBand, any AU host.</div>
         <span class="spec-tag">C++17</span>
       </div>
       <div class="spec-card">
-        <div class="spec-rivets"><span class="chrome-rivet"></span><span class="chrome-rivet"></span></div>
         <div class="spec-icon">&#9889;</div>
         <div class="spec-name">Zero-Latency Blend</div>
         <div class="spec-value">Parallel dual-zone processing with real-time crossfading. No artifacts.</div>
         <span class="spec-tag">Float32</span>
       </div>
       <div class="spec-card">
-        <div class="spec-rivets"><span class="chrome-rivet"></span><span class="chrome-rivet"></span></div>
         <div class="spec-icon">&#127925;</div>
         <div class="spec-name">IR Convolution</div>
         <div class="spec-value">Each zone includes a matched cabinet impulse response for authentic character.</div>
         <span class="spec-tag">Per-Zone IR</span>
       </div>
       <div class="spec-card">
-        <div class="spec-rivets"><span class="chrome-rivet"></span><span class="chrome-rivet"></span></div>
         <div class="spec-icon">&#128230;</div>
         <div class="spec-name">All-In-One</div>
         <div class="spec-value">All profiles and IRs bundled. No downloads, no file management. Install and play.</div>
@@ -2282,6 +1844,7 @@ footer::before {
 
 <!-- ═══════════ CTA — Dramatic finale ═══════════ -->
 <section class="cta-section" id="download">
+  <div class="photo-bg cta-photo"></div>
   <canvas class="cta-canvas" id="ctaCanvas"></canvas>
   <div class="cta-orb cta-orb-1"></div>
   <div class="cta-orb cta-orb-2"></div>
@@ -2340,21 +1903,19 @@ const ThemeMorph = {
     this.value = normalizedValue;
     const t = normalizedValue;
     const root = document.documentElement;
-    const accent = this.lerpColor('#c5a44e', '#00d4ff', t);
+    const accent = this.lerpColor('#d4a028', '#00d4ff', t);
     root.style.setProperty('--theme-accent', accent);
-    const glowR = Math.round(this.lerp(197,0,t));
-    const glowG = Math.round(this.lerp(164,212,t));
-    const glowB = Math.round(this.lerp(78,255,t));
+    const glowR = Math.round(this.lerp(212,0,t));
+    const glowG = Math.round(this.lerp(160,212,t));
+    const glowB = Math.round(this.lerp(40,255,t));
     root.style.setProperty('--theme-glow', `rgba(${glowR},${glowG},${glowB},0.25)`);
     root.style.setProperty('--theme-morph', t);
     const heroGlow = document.getElementById('heroGlow');
-    if (heroGlow) heroGlow.style.background = `radial-gradient(ellipse, rgba(${glowR},${glowG},${glowB},0.25) 0%, transparent 70%)`;
-    // Update pilot light color
-    const pilot = document.getElementById('pilotLight');
-    if (pilot) {
-      const pilotColor = `rgb(${glowR},${glowG},${glowB})`;
-      pilot.style.background = pilotColor;
-      pilot.style.boxShadow = `0 0 6px ${pilotColor}, 0 0 14px ${pilotColor}`;
+    if (heroGlow) heroGlow.style.background = `radial-gradient(circle, rgba(${glowR},${glowG},${glowB},0.2) 0%, transparent 60%)`;
+    const glitch = document.getElementById('titleGlitch');
+    if (glitch) {
+      glitch.style.opacity = Math.max(0, (t - 0.5) * 0.3);
+      glitch.style.animation = t > 0.7 ? 'glitchShift 0.5s steps(3) infinite' : 'none';
     }
     const ring = document.getElementById('dialRing');
     if (ring) { ring.style.borderColor = accent + '30'; ring.style.boxShadow = `0 0 40px ${accent}15`; }
@@ -2394,7 +1955,7 @@ class ParticleSystem {
       if (p.x < 0) p.x = this.width; if (p.x > this.width) p.x = 0;
       if (p.y < 0) p.y = this.height; if (p.y > this.height) p.y = 0;
       const alpha = p.opacity * (Math.sin(p.pulse) * 0.3 + 0.7);
-      const r = Math.round(197*(1-t)), g = Math.round(164*(1-t) + 212*t), b = Math.round(78*(1-t) + 255*t);
+      const r = Math.round(212*(1-t)), g = Math.round(160*(1-t) + 212*t), b = Math.round(40*(1-t) + 255*t);
       this.ctx.beginPath();
       this.ctx.arc(p.x, p.y, p.size * (1+t*0.5), 0, Math.PI*2);
       this.ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
@@ -2463,7 +2024,7 @@ class ParticleSystem {
     const tick = document.createElementNS('http://www.w3.org/2000/svg','line');
     tick.setAttribute('x1',CX+r1*Math.cos(rad)); tick.setAttribute('y1',CY+r1*Math.sin(rad));
     tick.setAttribute('x2',CX+r2*Math.cos(rad)); tick.setAttribute('y2',CY+r2*Math.sin(rad));
-    tick.setAttribute('stroke', isMajor ? '#c5a44e' : '#6b5d4a');
+    tick.setAttribute('stroke', isMajor ? '#a89878' : '#6b5d4a');
     tick.setAttribute('stroke-width', isMajor ? '2' : '1');
     ticksGroup.appendChild(tick);
   }
@@ -2493,14 +2054,7 @@ class ParticleSystem {
       }
     }
     ThemeMorph.update(normalized);
-    dial.style.filter = `drop-shadow(0 0 40px ${label.style.color}20)`;
-
-    // Update zone indicator dots
-    const zoneNames = ['clean','warm','crunch','drive','lead'];
-    const currentZoneName = label.textContent.toLowerCase();
-    document.querySelectorAll('.zone-indicator-dot').forEach(dot => {
-      dot.classList.toggle('active', dot.dataset.zone === currentZoneName);
-    });
+    dial.style.filter = `drop-shadow(0 0 60px ${label.style.color}25)`;
   }
 
   dial.addEventListener('pointerdown', (e) => { isDragging = true; startY = e.clientY; startAngle = currentAngle; dial.setPointerCapture(e.pointerId); e.preventDefault(); });
@@ -2538,6 +2092,7 @@ document.querySelectorAll('.zone-oscilloscope').forEach(canvas => {
     const time = Date.now() / 1000;
     const [cr, cg, cb] = cfg.color;
 
+    // Draw multiple wave layers
     for (let layer = 0; layer < 3; layer++) {
       const layerAlpha = 0.15 - layer * 0.04;
       const freqMult = 1 + layer * 0.5;
@@ -2556,6 +2111,7 @@ document.querySelectorAll('.zone-oscilloscope').forEach(canvas => {
       ctx.stroke();
     }
 
+    // Center line
     ctx.beginPath();
     ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.05)`;
     ctx.lineWidth = 1;
@@ -2609,9 +2165,10 @@ document.querySelectorAll('.zone-oscilloscope').forEach(canvas => {
   function draw() {
     ctx.clearRect(0, 0, w, h);
     const gridSize = 40;
-    ctx.strokeStyle = 'rgba(197, 164, 78, 0.12)';
+    ctx.strokeStyle = 'rgba(212, 160, 40, 0.12)';
     ctx.lineWidth = 0.5;
 
+    // Draw circuit traces
     const seed = 42;
     for (let i = 0; i < 30; i++) {
       const sx = (Math.sin(seed + i * 3.7) * 0.5 + 0.5) * w;
@@ -2630,7 +2187,8 @@ document.querySelectorAll('.zone-oscilloscope').forEach(canvas => {
       }
       ctx.stroke();
 
-      ctx.fillStyle = 'rgba(197, 164, 78, 0.15)';
+      // Node dots at endpoints
+      ctx.fillStyle = 'rgba(212, 160, 40, 0.15)';
       ctx.beginPath();
       ctx.arc(cx, cy, 2, 0, Math.PI * 2);
       ctx.fill();
@@ -2659,12 +2217,14 @@ document.querySelectorAll('.demo-canvas-bg canvas').forEach(canvas => {
     const time = Date.now() / 1000;
     const [cr, cg, cb] = cfg.color;
 
+    // Gradient background
     const grad = ctx.createLinearGradient(0, 0, 0, h);
     grad.addColorStop(0, `rgba(${cr},${cg},${cb},0.08)`);
     grad.addColorStop(1, 'transparent');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, w, h);
 
+    // Waveform
     ctx.beginPath();
     ctx.strokeStyle = `rgba(${cr},${cg},${cb},0.4)`;
     ctx.lineWidth = 2;
@@ -2677,6 +2237,7 @@ document.querySelectorAll('.demo-canvas-bg canvas').forEach(canvas => {
     }
     ctx.stroke();
 
+    // Fill under waveform
     ctx.lineTo(w, h);
     ctx.lineTo(0, h);
     ctx.closePath();
@@ -2686,6 +2247,7 @@ document.querySelectorAll('.demo-canvas-bg canvas').forEach(canvas => {
     ctx.fillStyle = fillGrad;
     ctx.fill();
 
+    // Frequency bars at bottom
     if (cfg.bars) {
       const barCount = 32;
       const barW = w / barCount;
@@ -2718,6 +2280,7 @@ document.querySelectorAll('.demo-canvas-bg canvas').forEach(canvas => {
   resize();
   window.addEventListener('resize', resize);
 
+  // Create floating particles
   for (let i = 0; i < 40; i++) {
     particles.push({
       x: Math.random() * 2000,
@@ -2725,7 +2288,7 @@ document.querySelectorAll('.demo-canvas-bg canvas').forEach(canvas => {
       size: Math.random() * 3 + 1,
       speed: Math.random() * 0.3 + 0.1,
       angle: Math.random() * Math.PI * 2,
-      color: Math.random() > 0.5 ? [197,164,78] : [0,212,255],
+      color: Math.random() > 0.5 ? [212,160,40] : [0,212,255],
       opacity: Math.random() * 0.3 + 0.05,
     });
   }
@@ -2767,7 +2330,7 @@ document.querySelectorAll('.demo-canvas-bg canvas').forEach(canvas => {
     const t = i / 60;
     const h = 8 + Math.sin(t * Math.PI) * 35;
     bar.style.height = h + 'px';
-    bar.style.background = t > 0.78 ? '#c43030' : (t > 0.6 ? '#c5a44e' : '#4a8c3a');
+    bar.style.background = t > 0.78 ? '#c43030' : (t > 0.6 ? '#d4a028' : '#4a8c3a');
     bar.style.setProperty('--vu-speed', (0.5 + Math.random() * 1) + 's');
     bar.style.setProperty('--vu-delay', (Math.random() * 0.6) + 's');
     vu.appendChild(bar);
@@ -2813,66 +2376,6 @@ document.querySelectorAll('.demo-canvas-bg canvas').forEach(canvas => {
 window.addEventListener('scroll', () => {
   document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 50);
 }, { passive: true });
-
-// ═══════════════════════════════════════════════
-// GRILLE CANVAS — Oscilloscope on amp grille
-// ═══════════════════════════════════════════════
-
-(() => {
-  const canvas = document.getElementById('grilleCanvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  let w, h;
-
-  function resize() {
-    w = canvas.width = canvas.offsetWidth * 2;
-    h = canvas.height = canvas.offsetHeight * 2;
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  function draw() {
-    ctx.clearRect(0, 0, w, h);
-    const time = Date.now() / 1000;
-    const t = ThemeMorph.value;
-
-    // Color morphs from gold to cyan
-    const r = Math.round(197*(1-t) + 0*t);
-    const g = Math.round(164*(1-t) + 212*t);
-    const b = Math.round(78*(1-t) + 255*t);
-
-    // Main waveform
-    for (let layer = 0; layer < 2; layer++) {
-      const alpha = 0.12 - layer * 0.04;
-      const freq = 2 + t * 4 + layer * 1.5;
-      const amp = 0.15 + t * 0.25;
-      const noise = t * 0.15;
-      ctx.beginPath();
-      ctx.strokeStyle = `rgba(${r},${g},${b},${alpha})`;
-      ctx.lineWidth = 2 - layer * 0.5;
-      for (let x = 0; x < w; x++) {
-        const xn = x / w;
-        const wave = Math.sin(xn * Math.PI * 2 * freq + time * (1.5 + t * 2) + layer) * amp;
-        const harm = Math.sin(xn * Math.PI * 2 * freq * 3 + time * 2.5) * amp * 0.2;
-        const n = (Math.sin(x * 0.3 + time * 7) * Math.sin(x * 0.7 + time * 3)) * noise;
-        const y = h / 2 + (wave + harm + n) * h * 0.4;
-        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-    }
-
-    // Center line
-    ctx.beginPath();
-    ctx.strokeStyle = `rgba(${r},${g},${b},0.03)`;
-    ctx.lineWidth = 1;
-    ctx.moveTo(0, h/2);
-    ctx.lineTo(w, h/2);
-    ctx.stroke();
-
-    requestAnimationFrame(draw);
-  }
-  draw();
-})();
 
 // ═══════════════════════════════════════════════
 // INIT

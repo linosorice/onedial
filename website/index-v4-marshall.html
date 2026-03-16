@@ -229,393 +229,225 @@ nav.scrolled {
   border-radius: 2px;
 }
 
-/* ═══════════ HERO — AMP HEAD (full-bleed) ═══════════ */
+/* ═══════════ HERO ═══════════ */
 .hero {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   position: relative;
   z-index: 1;
-  padding: 0;
+  padding: 8rem 2rem 4rem;
   overflow: hidden;
 }
 
-/* ── Amp body — full width, IS the page ── */
-.amp-body {
-  position: relative;
-  width: 100%;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  opacity: 0;
-  animation: ampReveal 1.5s 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* ── Top logo bar — silk-screened brand ── */
-.amp-logo-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5.5rem 4rem 1rem;
-  background: linear-gradient(180deg, rgba(18, 16, 13, 0.95) 0%, rgba(14, 13, 10, 0.98) 100%);
-  position: relative;
-  z-index: 3;
-}
-
-.amp-brand {
-  font-family: var(--font-display);
-  font-size: clamp(2.5rem, 6vw, 4.5rem);
-  font-weight: 400;
-  font-style: italic;
-  color: var(--m-gold-bright);
-  letter-spacing: 0.02em;
-  text-shadow: 0 0 30px rgba(197, 164, 78, 0.15);
-  line-height: 1;
-}
-
-.amp-model {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--m-gold-dim);
-  opacity: 0.5;
-  text-align: right;
-}
-.amp-model-line {
-  display: block;
-  margin-top: 0.2rem;
-  font-size: 0.5rem;
-  opacity: 0.4;
-  letter-spacing: 0.2em;
-  color: var(--v-cream-dim);
-}
-
-/* Corner rivets on logo bar */
-.amp-logo-bar .corner-rivet {
-  position: absolute;
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #d0c8b8, #6a6258 50%, #3a3530 100%);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.6), inset 0 0.5px 0.5px rgba(255,255,255,0.1);
-}
-.amp-logo-bar .corner-rivet:nth-child(1) { top: 5.2rem; left: 20px; }
-.amp-logo-bar .corner-rivet:nth-child(2) { top: 5.2rem; right: 20px; }
-
-/* Gold piping between logo and grille */
-.amp-piping-top {
-  height: 2px;
-  background: linear-gradient(90deg,
-    rgba(197, 164, 78, 0.03),
-    rgba(197, 164, 78, 0.12) 15%,
-    rgba(197, 164, 78, 0.18) 50%,
-    rgba(197, 164, 78, 0.12) 85%,
-    rgba(197, 164, 78, 0.03)
-  );
-  position: relative;
-  z-index: 3;
-}
-
-/* ── Grille cloth section — the big visual ── */
-.amp-grille {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  background: #0c0b09;
-  overflow: hidden;
-  z-index: 2;
-}
-
-/* The actual grille cloth dots */
-.amp-grille-cloth {
+/* Grille cloth pattern behind hero */
+.hero::before {
+  content: '';
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle, rgba(197, 164, 78, 0.1) 0.6px, transparent 0.6px);
-  background-size: 4px 4px;
-  z-index: 1;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: radial-gradient(circle, var(--m-gold) 0.5px, transparent 0.5px);
+  background-size: 6px 6px;
 }
 
-/* Warm ambient light on grille — shifts with theme */
-.amp-grille-glow {
+.hero-glow {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  width: 100%; height: 100%;
-  background: radial-gradient(ellipse at center 60%, var(--theme-glow) 0%, transparent 65%);
+  width: 1000px; height: 1000px;
+  background: radial-gradient(circle, var(--theme-glow) 0%, transparent 60%);
+  pointer-events: none;
+  transition: background 0.8s ease;
+  opacity: 0.7;
+}
+
+.hero-pretitle {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--v-muted);
+  opacity: 0;
+  animation: fadeUp 1s 0.3s ease forwards;
+  position: relative;
   z-index: 2;
-  opacity: 0.6;
-  transition: background 0.8s;
+}
+.hero-pretitle .vintage-text { color: var(--m-gold-bright); }
+.hero-pretitle .future-text { color: var(--f-cyan); }
+.hero-pretitle .separator {
+  display: inline-block;
+  width: 30px; height: 1px;
+  background: linear-gradient(90deg, var(--m-gold), var(--f-cyan));
+  vertical-align: middle;
+  margin: 0 0.75rem;
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(5rem, 14vw, 12rem);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  position: relative;
+  z-index: 2;
+  opacity: 0;
+  animation: heroReveal 1.2s 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.hero-title-main {
+  display: block;
+  background: linear-gradient(180deg, var(--v-cream) 30%, var(--m-gold-bright) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 4px 40px rgba(197, 164, 78, 0.2));
+  transition: filter 0.8s;
+}
+
+.hero-title-glitch {
+  position: absolute;
+  top: 0; left: 0;
+  display: block;
+  background: linear-gradient(180deg, var(--f-cyan) 30%, var(--f-magenta) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  opacity: 0;
+  transition: opacity 0.4s;
+  clip-path: polygon(0 0, 100% 0, 100% 15%, 0 15%, 0 40%, 100% 40%, 100% 55%, 0 55%, 0 80%, 100% 80%, 100% 100%, 0 100%);
+}
+
+.hero-tagline {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  font-weight: 400;
+  color: var(--v-cream-dim);
+  margin-top: 2rem;
+  letter-spacing: 0.05em;
+  opacity: 0;
+  animation: fadeUp 1s 0.8s ease forwards;
+  position: relative;
+  z-index: 2;
+}
+
+/* ═══════════ DIAL — with amp faceplate ═══════════ */
+.dial-wrapper {
+  position: relative;
+  margin-top: 4rem;
+  opacity: 0;
+  animation: dialEntrance 1.5s 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  z-index: 3;
+}
+
+/* Amp faceplate behind dial */
+.dial-faceplate {
+  position: absolute;
+  top: -60px; left: -80px; right: -80px; bottom: -90px;
+  background: linear-gradient(180deg, #1e1b16 0%, #15130f 50%, #0e0d0a 100%);
+  border: 1px solid rgba(197, 164, 78, 0.12);
+  border-radius: 12px;
+  z-index: -1;
+  box-shadow:
+    inset 0 1px 0 rgba(197, 164, 78, 0.08),
+    0 20px 80px rgba(0,0,0,0.6);
+}
+
+/* Gold piping around faceplate */
+.dial-faceplate::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(197, 164, 78, 0.1);
+  border-radius: 10px;
   pointer-events: none;
 }
 
-/* Hidden title for SEO */
-.hero-title-hidden {
+/* Silk-screened labels on faceplate */
+.faceplate-labels {
   position: absolute;
-  width: 1px; height: 1px;
-  overflow: hidden;
-  clip: rect(0,0,0,0);
-  white-space: nowrap;
-}
-
-/* Canvas oscilloscope overlaid on grille */
-.amp-grille-canvas {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  opacity: 0.15;
-  transition: opacity 0.6s;
-}
-
-/* Gold piping between grille and control strip */
-.amp-piping-mid {
-  height: 2px;
-  background: linear-gradient(90deg,
-    rgba(197, 164, 78, 0.03),
-    rgba(197, 164, 78, 0.15) 15%,
-    rgba(197, 164, 78, 0.25) 50%,
-    rgba(197, 164, 78, 0.15) 85%,
-    rgba(197, 164, 78, 0.03)
-  );
-  position: relative;
-  z-index: 5;
-  box-shadow: 0 0 8px rgba(197, 164, 78, 0.06);
-}
-
-/* ── Control strip — the heart ── */
-.amp-control-strip {
+  bottom: -50px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(2rem, 5vw, 5rem);
-  padding: 1.5rem 4rem;
-  background: linear-gradient(180deg, #16140f 0%, #111010 50%, #0e0d0a 100%);
-  position: relative;
+  gap: 3rem;
   z-index: 4;
 }
-
-/* ── Input jack (decorative) ── */
-.amp-input-jack {
-  width: 24px; height: 24px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 40% 35%, #3a3530, #1a1816 60%, #0e0d0a);
-  border: 2px solid #2a2520;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.8), 0 1px 2px rgba(0,0,0,0.5);
-  flex-shrink: 0;
-  position: relative;
-}
-.amp-input-jack::after {
-  content: '';
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: #0a0908;
-  border: 1px solid #2a2520;
-}
-
-.amp-jack-label {
+.faceplate-label {
   font-family: var(--font-mono);
-  font-size: 0.45rem;
-  letter-spacing: 0.15em;
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--m-gold-dim);
-  opacity: 0.35;
-  text-align: center;
-  margin-top: 0.35rem;
+  opacity: 0.5;
 }
 
-.amp-jack-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-/* ── Pilot light ── */
+/* Pilot light LED */
 .pilot-light {
   display: inline-block;
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--m-gold);
-  box-shadow: 0 0 6px var(--m-gold), 0 0 14px rgba(197, 164, 78, 0.4);
+  box-shadow: 0 0 6px var(--m-gold), 0 0 12px rgba(197, 164, 78, 0.3);
   animation: pilotPulse 3s ease-in-out infinite;
   vertical-align: middle;
-}
-
-.amp-pilot-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-  flex-shrink: 0;
-}
-.amp-pilot-label {
-  font-family: var(--font-mono);
-  font-size: 0.45rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--m-gold-dim);
-  opacity: 0.35;
-}
-
-/* ── Dial in control strip ── */
-.dial-wrapper {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  margin-left: 0.5rem;
 }
 
 .dial-outer-ring {
   position: absolute;
-  top: -15px; left: -15px; right: -15px; bottom: -15px;
+  top: -30px; left: -30px; right: -30px; bottom: -30px;
   border-radius: 50%;
-  border: 1px solid rgba(197, 164, 78, 0.08);
+  border: 1px solid rgba(197, 164, 78, 0.15);
   transition: border-color 0.8s, box-shadow 0.8s;
   animation: ringPulse 4s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.dial-knob-container {
-  position: relative;
 }
 
 .dial-svg {
-  width: clamp(160px, 18vw, 220px);
-  height: clamp(160px, 18vw, 220px);
+  width: 320px; height: 320px;
   cursor: grab;
   user-select: none;
-  filter: drop-shadow(0 0 30px rgba(197, 164, 78, 0.08));
+  filter: drop-shadow(0 0 60px rgba(197, 164, 78, 0.15));
   transition: filter 0.8s;
 }
 .dial-svg:active { cursor: grabbing; }
 
-/* Zone label + value below dial */
-.dial-readout {
-  text-align: center;
-  margin-top: 0.5rem;
-}
-
 .dial-zone-label {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.25em;
+  font-size: 0.85rem;
+  letter-spacing: 0.3em;
+  text-align: center;
+  margin-top: 1.5rem;
   text-transform: uppercase;
-  min-height: 1.2em;
+  min-height: 1.4em;
   transition: color 0.3s;
 }
 
 .dial-value {
   font-family: var(--font-mono);
-  font-size: 1.3rem;
+  font-size: 2rem;
   font-weight: 700;
-  color: var(--v-cream);
-  transition: color 0.3s;
-  line-height: 1.2;
-}
-
-.dial-silk-label {
-  font-family: var(--font-mono);
-  font-size: 0.45rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--m-gold-dim);
-  opacity: 0.35;
-  margin-top: 0.2rem;
-}
-
-/* ── Zone display (adjacent to dial) ── */
-.amp-zone-display {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-  flex-shrink: 0;
-}
-
-.zone-indicator-bar {
-  display: flex;
-  gap: 3px;
-}
-.zone-indicator-dot {
-  width: 5px; height: 5px;
-  border-radius: 50%;
-  background: var(--v-raised);
-  border: 1px solid rgba(255,255,255,0.04);
-  transition: background 0.3s, box-shadow 0.3s;
-}
-.zone-indicator-dot.active {
-  background: var(--zone-dot-color, var(--m-gold));
-  box-shadow: 0 0 6px var(--zone-dot-color, var(--m-gold));
-}
-
-.amp-zone-label-text {
-  font-family: var(--font-mono);
-  font-size: 0.45rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--m-gold-dim);
-  opacity: 0.35;
-}
-
-/* Gold piping below controls */
-.amp-piping-bottom {
-  height: 2px;
-  background: linear-gradient(90deg,
-    rgba(197, 164, 78, 0.03),
-    rgba(197, 164, 78, 0.12) 15%,
-    rgba(197, 164, 78, 0.18) 50%,
-    rgba(197, 164, 78, 0.12) 85%,
-    rgba(197, 164, 78, 0.03)
-  );
-  position: relative;
-  z-index: 3;
-}
-
-/* ── Bottom bar ── */
-.amp-bottom-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  padding: 1.5rem 4rem 3rem;
-  background: linear-gradient(180deg, #0e0d0a 0%, var(--v-black) 100%);
-  position: relative;
-  z-index: 3;
-}
-
-.amp-tagline {
-  font-family: var(--font-heading);
-  font-size: clamp(0.8rem, 1.5vw, 1rem);
-  font-weight: 400;
-  color: var(--v-cream-dim);
-  letter-spacing: 0.08em;
   text-align: center;
-}
-.amp-tagline-separator {
-  color: var(--m-gold-dim);
-  opacity: 0.3;
-  margin: 0 0.4rem;
+  color: var(--v-cream);
+  margin-top: 0.25rem;
+  transition: color 0.3s;
 }
 
-/* ── Drag hint below amp ── */
 .dial-hint {
-  position: absolute;
-  bottom: 5rem;
-  left: 50%;
-  transform: translateX(-50%);
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   color: var(--v-muted);
   text-align: center;
+  margin-top: 1rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   opacity: 0;
-  animation: fadeUp 1s 2s ease forwards;
-  z-index: 6;
+  animation: fadeUp 1s 1.5s ease forwards;
 }
 
 .dial-hint-arrow {
@@ -625,32 +457,27 @@ nav.scrolled {
 
 .hero-scroll {
   position: absolute;
-  bottom: 1.5rem;
+  bottom: 2rem;
   left: 50%;
   transform: translateX(-50%);
   opacity: 0;
-  animation: fadeUp 1s 2.5s ease forwards;
-  z-index: 6;
+  animation: fadeUp 1s 2s ease forwards;
+  z-index: 2;
 }
 .scroll-indicator {
-  width: 22px; height: 36px;
+  width: 24px; height: 40px;
   border: 1.5px solid var(--v-muted);
-  border-radius: 11px;
+  border-radius: 12px;
   position: relative;
 }
 .scroll-dot {
-  width: 3px; height: 7px;
+  width: 3px; height: 8px;
   background: var(--m-gold);
   border-radius: 2px;
   position: absolute;
-  top: 7px; left: 50%;
+  top: 8px; left: 50%;
   transform: translateX(-50%);
   animation: scrollDot 2s ease-in-out infinite;
-}
-
-/* Glitch layer (hidden) */
-.hero-title-glitch {
-  display: none;
 }
 
 /* ═══════════ SECTION COMMONS ═══════════ */
@@ -1758,10 +1585,6 @@ footer::before {
   from { opacity: 0; transform: translateY(50px) scale(0.95); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
-@keyframes ampReveal {
-  from { opacity: 0; transform: translateY(30px) scale(0.97); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
 @keyframes dialEntrance {
   from { opacity: 0; transform: scale(0.8) rotate(-20deg); }
   to { opacity: 1; transform: scale(1) rotate(0); }
@@ -1845,11 +1668,9 @@ footer::before {
   .nav-hamburger { display: flex; }
 
   section, .demos-section { padding: 5rem 1.25rem; }
-  .hero { padding: 0; }
-  .amp-logo-bar { padding: 5rem 1.5rem 0.8rem; }
-  .amp-control-strip { padding: 1.2rem 1rem; gap: 1.2rem; }
-  .amp-jack-group, .amp-pilot-group { display: none; }
-  .amp-bottom-bar { padding: 1rem 1.5rem 2.5rem; }
+  .hero { padding: 6rem 1.25rem 4rem; }
+  .dial-svg { width: 260px; height: 260px; }
+  .dial-faceplate { top: -40px; left: -50px; right: -50px; bottom: -70px; }
 
   .zones-section { padding: 5rem 0; }
   .zones-track { flex-direction: column; }
@@ -1870,9 +1691,10 @@ footer::before {
 }
 
 @media (max-width: 480px) {
-  .amp-brand { font-size: 2rem; }
-  .amp-model { font-size: 0.5rem; }
-  .amp-control-strip { gap: 0.8rem; padding: 1rem 0.75rem; }
+  .hero-title { font-size: clamp(3.5rem, 16vw, 5rem); }
+  .dial-svg { width: 220px; height: 220px; }
+  .faceplate-labels { gap: 1.5rem; }
+  .faceplate-label { font-size: 0.45rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1916,117 +1738,71 @@ footer::before {
   <a href="#download" class="nav-cta">Download</a>
 </div>
 
-<!-- ═══════════ HERO — AMP HEAD ═══════════ -->
+<!-- ═══════════ HERO ═══════════ -->
 <section class="hero">
-  <h1 class="hero-title-hidden">OneDial — One Knob. Five Zones. Infinite Tone.</h1>
+  <div class="hero-glow" id="heroGlow"></div>
 
-  <div class="amp-body">
-    <!-- Logo bar -->
-    <div class="amp-logo-bar">
-      <span class="corner-rivet"></span>
-      <span class="corner-rivet"></span>
-      <div class="amp-brand">OneDial</div>
-      <div class="amp-model">
-        NAM Engine
-        <span class="amp-model-line">Neural Amp Modeler</span>
-      </div>
-    </div>
-
-    <div class="amp-piping-top"></div>
-
-    <!-- Grille cloth -->
-    <div class="amp-grille">
-      <div class="amp-grille-cloth"></div>
-      <div class="amp-grille-glow" id="heroGlow"></div>
-      <canvas class="amp-grille-canvas" id="grilleCanvas"></canvas>
-    </div>
-
-    <div class="amp-piping-mid"></div>
-
-    <!-- Control strip -->
-    <div class="amp-control-strip">
-      <div class="amp-jack-group">
-        <div class="amp-input-jack"></div>
-        <div class="amp-jack-label">Input</div>
-      </div>
-
-      <div class="amp-pilot-group">
-        <span class="pilot-light" id="pilotLight"></span>
-        <div class="amp-pilot-label">Power</div>
-      </div>
-
-      <div class="dial-wrapper">
-        <div class="dial-knob-container">
-          <div class="dial-outer-ring" id="dialRing"></div>
-          <svg class="dial-svg" id="dial" viewBox="0 0 320 320">
-            <defs>
-              <radialGradient id="dialFace" cx="50%" cy="42%" r="50%">
-                <stop offset="0%" stop-color="#3a3530"/>
-                <stop offset="100%" stop-color="#161412"/>
-              </radialGradient>
-              <radialGradient id="dialHighlight" cx="38%" cy="32%" r="50%">
-                <stop offset="0%" stop-color="rgba(255,255,255,0.05)"/>
-                <stop offset="100%" stop-color="transparent"/>
-              </radialGradient>
-              <filter id="dialShadow">
-                <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.6"/>
-              </filter>
-              <filter id="pointerGlow">
-                <feGaussianBlur stdDeviation="3" result="blur"/>
-                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-              </filter>
-            </defs>
-            <circle cx="160" cy="160" r="150" fill="none" stroke="#2a2520" stroke-width="2" opacity="0.5"/>
-            <circle cx="160" cy="160" r="148" fill="none" stroke="#0a0908" stroke-width="1"/>
-            <g id="zoneArcs"></g>
-            <g id="ticks" stroke-linecap="round"></g>
-            <circle cx="160" cy="160" r="80" fill="url(#dialFace)" filter="url(#dialShadow)"/>
-            <circle cx="160" cy="160" r="80" fill="url(#dialHighlight)"/>
-            <circle cx="160" cy="160" r="80" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
-            <g id="gripLines" opacity="0.12"></g>
-            <g id="pointer" filter="url(#pointerGlow)">
-              <line x1="160" y1="160" x2="160" y2="88" stroke="#c5a44e" stroke-width="3" stroke-linecap="round"/>
-              <circle cx="160" cy="92" r="4" fill="#c5a44e"/>
-            </g>
-            <circle cx="160" cy="160" r="14" fill="#2a2520"/>
-            <circle cx="160" cy="160" r="12" fill="#161412"/>
-            <circle cx="160" cy="160" r="5" fill="rgba(197,164,78,0.2)"/>
-          </svg>
-        </div>
-        <div class="dial-readout">
-          <div class="dial-zone-label" id="dialZoneLabel">CRUNCH</div>
-          <div class="dial-value" id="dialValue">5.0</div>
-          <div class="dial-silk-label">Tone</div>
-        </div>
-      </div>
-
-      <div class="amp-zone-display" id="zoneDisplay">
-        <div class="zone-indicator-bar" id="zoneIndicatorBar">
-          <span class="zone-indicator-dot" data-zone="clean" style="--zone-dot-color: var(--z-clean);"></span>
-          <span class="zone-indicator-dot" data-zone="warm" style="--zone-dot-color: var(--z-warm);"></span>
-          <span class="zone-indicator-dot active" data-zone="crunch" style="--zone-dot-color: var(--z-crunch);"></span>
-          <span class="zone-indicator-dot" data-zone="drive" style="--zone-dot-color: var(--z-drive);"></span>
-          <span class="zone-indicator-dot" data-zone="lead" style="--zone-dot-color: var(--z-lead);"></span>
-        </div>
-        <div class="amp-zone-label-text">Zone</div>
-      </div>
-
-      <div class="amp-jack-group">
-        <div class="amp-input-jack"></div>
-        <div class="amp-jack-label">Output</div>
-      </div>
-    </div>
-
-    <div class="amp-piping-bottom"></div>
-
-    <!-- Bottom bar -->
-    <div class="amp-bottom-bar">
-      <span class="amp-tagline">One knob<span class="amp-tagline-separator">/</span>Five zones<span class="amp-tagline-separator">/</span>Infinite tone</span>
-    </div>
+  <div class="hero-pretitle">
+    <span class="vintage-text">Vintage Tone</span>
+    <span class="separator"></span>
+    <span class="future-text">Neural Future</span>
   </div>
 
-  <div class="dial-hint">
-    <span class="dial-hint-arrow">&#8597;</span> Drag the knob to morph the atmosphere
+  <h1 class="hero-title">
+    <span class="hero-title-main">OneDial</span>
+    <span class="hero-title-glitch" id="titleGlitch" aria-hidden="true">OneDial</span>
+  </h1>
+
+  <p class="hero-tagline">One knob. Five zones. Infinite tone.</p>
+
+  <div class="dial-wrapper">
+    <div class="dial-faceplate"></div>
+    <div class="dial-outer-ring" id="dialRing"></div>
+    <svg class="dial-svg" id="dial" viewBox="0 0 320 320">
+      <defs>
+        <radialGradient id="dialFace" cx="50%" cy="42%" r="50%">
+          <stop offset="0%" stop-color="#3a3530"/>
+          <stop offset="100%" stop-color="#161412"/>
+        </radialGradient>
+        <radialGradient id="dialHighlight" cx="38%" cy="32%" r="50%">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.05)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient>
+        <filter id="dialShadow">
+          <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#000" flood-opacity="0.6"/>
+        </filter>
+        <filter id="pointerGlow">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <circle cx="160" cy="160" r="150" fill="none" stroke="#2a2520" stroke-width="2" opacity="0.5"/>
+      <circle cx="160" cy="160" r="148" fill="none" stroke="#0a0908" stroke-width="1"/>
+      <g id="zoneArcs"></g>
+      <g id="ticks" stroke-linecap="round"></g>
+      <circle cx="160" cy="160" r="80" fill="url(#dialFace)" filter="url(#dialShadow)"/>
+      <circle cx="160" cy="160" r="80" fill="url(#dialHighlight)"/>
+      <circle cx="160" cy="160" r="80" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+      <g id="gripLines" opacity="0.12"></g>
+      <g id="pointer" filter="url(#pointerGlow)">
+        <line x1="160" y1="160" x2="160" y2="88" stroke="#c5a44e" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="160" cy="92" r="4" fill="#c5a44e"/>
+      </g>
+      <circle cx="160" cy="160" r="14" fill="#2a2520"/>
+      <circle cx="160" cy="160" r="12" fill="#161412"/>
+      <circle cx="160" cy="160" r="5" fill="rgba(197,164,78,0.2)"/>
+    </svg>
+
+    <div class="dial-zone-label" id="dialZoneLabel">CRUNCH</div>
+    <div class="dial-value" id="dialValue">5.0</div>
+    <div class="faceplate-labels">
+      <span class="faceplate-label">Volume</span>
+      <span class="faceplate-label">Tone <span class="pilot-light"></span></span>
+      <span class="faceplate-label">Gain</span>
+    </div>
+    <div class="dial-hint">
+      <span class="dial-hint-arrow">&#8597;</span> Drag to morph the atmosphere
+    </div>
   </div>
 
   <div class="hero-scroll">
@@ -2348,13 +2124,11 @@ const ThemeMorph = {
     root.style.setProperty('--theme-glow', `rgba(${glowR},${glowG},${glowB},0.25)`);
     root.style.setProperty('--theme-morph', t);
     const heroGlow = document.getElementById('heroGlow');
-    if (heroGlow) heroGlow.style.background = `radial-gradient(ellipse, rgba(${glowR},${glowG},${glowB},0.25) 0%, transparent 70%)`;
-    // Update pilot light color
-    const pilot = document.getElementById('pilotLight');
-    if (pilot) {
-      const pilotColor = `rgb(${glowR},${glowG},${glowB})`;
-      pilot.style.background = pilotColor;
-      pilot.style.boxShadow = `0 0 6px ${pilotColor}, 0 0 14px ${pilotColor}`;
+    if (heroGlow) heroGlow.style.background = `radial-gradient(circle, rgba(${glowR},${glowG},${glowB},0.2) 0%, transparent 60%)`;
+    const glitch = document.getElementById('titleGlitch');
+    if (glitch) {
+      glitch.style.opacity = Math.max(0, (t - 0.5) * 0.3);
+      glitch.style.animation = t > 0.7 ? 'glitchShift 0.5s steps(3) infinite' : 'none';
     }
     const ring = document.getElementById('dialRing');
     if (ring) { ring.style.borderColor = accent + '30'; ring.style.boxShadow = `0 0 40px ${accent}15`; }
@@ -2493,14 +2267,7 @@ class ParticleSystem {
       }
     }
     ThemeMorph.update(normalized);
-    dial.style.filter = `drop-shadow(0 0 40px ${label.style.color}20)`;
-
-    // Update zone indicator dots
-    const zoneNames = ['clean','warm','crunch','drive','lead'];
-    const currentZoneName = label.textContent.toLowerCase();
-    document.querySelectorAll('.zone-indicator-dot').forEach(dot => {
-      dot.classList.toggle('active', dot.dataset.zone === currentZoneName);
-    });
+    dial.style.filter = `drop-shadow(0 0 60px ${label.style.color}25)`;
   }
 
   dial.addEventListener('pointerdown', (e) => { isDragging = true; startY = e.clientY; startAngle = currentAngle; dial.setPointerCapture(e.pointerId); e.preventDefault(); });
@@ -2813,66 +2580,6 @@ document.querySelectorAll('.demo-canvas-bg canvas').forEach(canvas => {
 window.addEventListener('scroll', () => {
   document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 50);
 }, { passive: true });
-
-// ═══════════════════════════════════════════════
-// GRILLE CANVAS — Oscilloscope on amp grille
-// ═══════════════════════════════════════════════
-
-(() => {
-  const canvas = document.getElementById('grilleCanvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  let w, h;
-
-  function resize() {
-    w = canvas.width = canvas.offsetWidth * 2;
-    h = canvas.height = canvas.offsetHeight * 2;
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  function draw() {
-    ctx.clearRect(0, 0, w, h);
-    const time = Date.now() / 1000;
-    const t = ThemeMorph.value;
-
-    // Color morphs from gold to cyan
-    const r = Math.round(197*(1-t) + 0*t);
-    const g = Math.round(164*(1-t) + 212*t);
-    const b = Math.round(78*(1-t) + 255*t);
-
-    // Main waveform
-    for (let layer = 0; layer < 2; layer++) {
-      const alpha = 0.12 - layer * 0.04;
-      const freq = 2 + t * 4 + layer * 1.5;
-      const amp = 0.15 + t * 0.25;
-      const noise = t * 0.15;
-      ctx.beginPath();
-      ctx.strokeStyle = `rgba(${r},${g},${b},${alpha})`;
-      ctx.lineWidth = 2 - layer * 0.5;
-      for (let x = 0; x < w; x++) {
-        const xn = x / w;
-        const wave = Math.sin(xn * Math.PI * 2 * freq + time * (1.5 + t * 2) + layer) * amp;
-        const harm = Math.sin(xn * Math.PI * 2 * freq * 3 + time * 2.5) * amp * 0.2;
-        const n = (Math.sin(x * 0.3 + time * 7) * Math.sin(x * 0.7 + time * 3)) * noise;
-        const y = h / 2 + (wave + harm + n) * h * 0.4;
-        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-    }
-
-    // Center line
-    ctx.beginPath();
-    ctx.strokeStyle = `rgba(${r},${g},${b},0.03)`;
-    ctx.lineWidth = 1;
-    ctx.moveTo(0, h/2);
-    ctx.lineTo(w, h/2);
-    ctx.stroke();
-
-    requestAnimationFrame(draw);
-  }
-  draw();
-})();
 
 // ═══════════════════════════════════════════════
 // INIT
