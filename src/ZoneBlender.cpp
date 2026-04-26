@@ -116,12 +116,21 @@ void ZoneBlender::process(juce::AudioBuffer<float>& buffer, float dialValue)
         if (irLoaders[idxB].isLoaded())
             irLoaders[idxB].process(tempBufferB.getWritePointer(0), numSamples);
 
+        // Equal-power (constant-power) crossfade: gainA = cos(t·π/2),
+        // gainB = sin(t·π/2). Two NAM models trained on different amps
+        // produce mostly uncorrelated harmonic content, so a linear
+        // amplitude crossfade would sag by ~3 dB at the midpoint
+        // (a*0.5 + b*0.5 sums to 0.707 in power for uncorrelated sources).
+        // sin/cos summed in quadrature keep the perceived level flat.
+        const float angle = blendFactor * juce::MathConstants<float>::halfPi;
+        const float gainA = std::cos(angle);
+        const float gainB = std::sin(angle);
+
         const float* aData = tempBufferA.getReadPointer(0);
         const float* bData = tempBufferB.getReadPointer(0);
-        const float invBlend = 1.0f - blendFactor;
 
         for (int i = 0; i < numSamples; ++i)
-            ch0[i] = aData[i] * invBlend + bData[i] * blendFactor;
+            ch0[i] = aData[i] * gainA + bData[i] * gainB;
     }
 
     // Copy mono result to all other channels.
