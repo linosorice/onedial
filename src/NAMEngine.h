@@ -64,6 +64,7 @@ private:
     int currentBlockSize = 512;
     double modelSampleRate = -1.0;
     float loudnessGain = 1.0f;
+    bool loudnessGainComputed = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(NAMEngine)
 };

@@ -44,6 +44,10 @@ private:
 
     double currentSampleRate = 44100.0;
     int currentBlockSize = 512;
+    // SR at which the IR was last committed to the convolver. Used to skip
+    // the (allocating) re-commit on subsequent prepare() calls when SR
+    // hasn't changed.
+    double lastCommittedSampleRate = -1.0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(IRLoader)
 };

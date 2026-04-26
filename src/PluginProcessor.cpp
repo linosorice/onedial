@@ -59,8 +59,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout OneDial::createParameterLayo
 
 void OneDial::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
-    juce::Logger::writeToLog("OneDial::prepareToPlay sr=" + juce::String(sampleRate)
-                             + " block=" + juce::String(samplesPerBlock));
     zoneBlender.prepare(sampleRate, samplesPerBlock);
 
     // Noise gate - fixed internal settings

@@ -69,9 +69,6 @@ private:
     juce::AudioBuffer<float> tempBufferA;
     juce::AudioBuffer<float> tempBufferB;
 
-    // Per-zone first-time "not loaded" log latch
-    std::array<bool, kNumZones> loggedMissingZone{};
-
     double currentSampleRate = 44100.0;
     int currentBlockSize = 512;
 

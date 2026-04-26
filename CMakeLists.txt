@@ -104,11 +104,11 @@ target_compile_definitions(OneDial PUBLIC
 )
 
 # --- Link Libraries ---
-# NOTE: juce_recommended_lto_flags is intentionally NOT included. LTO strips
-# NAM's architecture-registration static initializers (anonymous-namespace
-# ConfigParserHelper objects in wavenet/model.cpp, lstm.cpp, etc.) because
-# nothing external references them, which causes get_dsp() to throw
-# "No config parser registered for architecture: WaveNet" at runtime.
+# NOTE: juce_recommended_lto_flags is intentionally NOT included. The real
+# fix that keeps NAM's architecture registrators alive is the -force_load
+# below, but LTO would still aggressively prune the same anonymous-namespace
+# ConfigParserHelper objects in wavenet/model.cpp, lstm.cpp etc. Skipping
+# the LTO recommendation removes that risk entirely.
 target_link_libraries(OneDial
     PRIVATE
         juce::juce_audio_utils
@@ -117,8 +117,6 @@ target_link_libraries(OneDial
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags
 )
-
-set_target_properties(OneDial PROPERTIES INTERPROCEDURAL_OPTIMIZATION FALSE)
 
 # Link NeuralAmpModelerCore.
 #
@@ -148,12 +146,20 @@ else()
     target_compile_definitions(onedial_nam_core PUBLIC NAM_SAMPLE_FLOAT=1)
     set_target_properties(onedial_nam_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-    # INTERFACE so the -force_load option propagates to the final plugin
-    # bundle (OneDial_AU, OneDial_Standalone), where the actual link happens.
-    # JUCE's "OneDial" is a static aggregator; per-format targets are what ld
-    # invokes, and that's where dead-stripping must be defeated.
-    target_link_options(onedial_nam_core INTERFACE
-        "LINKER:-force_load,$<TARGET_FILE:onedial_nam_core>")
+    # INTERFACE so the option propagates to the final plugin bundle
+    # (OneDial_AU, OneDial_Standalone) where ld actually runs. JUCE's
+    # "OneDial" is a static aggregator; per-format targets are what link.
+    # macOS uses Apple ld's -force_load. GNU ld uses --whole-archive.
+    if(APPLE)
+        target_link_options(onedial_nam_core INTERFACE
+            "LINKER:-force_load,$<TARGET_FILE:onedial_nam_core>")
+    elseif(UNIX)
+        target_link_options(onedial_nam_core INTERFACE
+            "LINKER:--whole-archive,$<TARGET_FILE:onedial_nam_core>,--no-whole-archive")
+    else()
+        message(FATAL_ERROR "OneDial is currently macOS-only; force-loading "
+                "the NAM static archive on this platform is not configured.")
+    endif()
     target_link_libraries(OneDial PRIVATE onedial_nam_core)
 endif()
 

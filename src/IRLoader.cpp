@@ -19,7 +19,10 @@ void IRLoader::loadFromMemory(const void* data, size_t dataSize)
     pendingSize = dataSize;
 
     if (prepared)
+    {
         commitPendingIR();
+        lastCommittedSampleRate = currentSampleRate;
+    }
 }
 
 void IRLoader::loadFromFile(const juce::String& filePath)
@@ -58,8 +61,14 @@ void IRLoader::prepare(double sampleRate, int samplesPerBlock)
     convolution.prepare(spec);
     prepared = true;
 
-    if (pendingData != nullptr)
+    // Commit the IR only if it hasn't been committed yet, or if the host
+    // changed the sample rate (the convolver internally resamples to the
+    // current SR at load time, so SR change requires a fresh load).
+    if (pendingData != nullptr && (!loaded || sampleRate != lastCommittedSampleRate))
+    {
         commitPendingIR();
+        lastCommittedSampleRate = sampleRate;
+    }
 }
 
 void IRLoader::commitPendingIR()
@@ -88,4 +97,5 @@ void IRLoader::reset()
     prepared = false;
     pendingData = nullptr;
     pendingSize = 0;
+    lastCommittedSampleRate = -1.0;
 }

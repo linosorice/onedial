@@ -8,8 +8,16 @@ void ZoneBlender::prepare(double sampleRate, int samplesPerBlock)
     currentSampleRate = sampleRate;
     currentBlockSize = samplesPerBlock;
 
-    tempBufferA.setSize(2, samplesPerBlock);
-    tempBufferB.setSize(2, samplesPerBlock);
+    // Pre-allocate to a generous ceiling so subsequent prepare calls (e.g.
+    // host re-probing after a transport change) don't trigger a realloc.
+    // 16384 samples covers AU validator's 4096 plus headroom.
+    constexpr int kMaxBlockSize = 16384;
+    const int desired = juce::jmax(samplesPerBlock, kMaxBlockSize);
+    if (tempBufferA.getNumSamples() < desired)
+    {
+        tempBufferA.setSize(2, desired, false, false, false);
+        tempBufferB.setSize(2, desired, false, false, false);
+    }
 
     for (auto& engine : namEngines)
         engine.prepare(sampleRate, samplesPerBlock);
@@ -80,14 +88,6 @@ void ZoneBlender::process(juce::AudioBuffer<float>& buffer, float dialValue)
 
     const auto idxA = static_cast<size_t>(zoneA);
     const auto idxB = static_cast<size_t>(zoneB);
-
-    // Log the first time zoneA is not loaded. This makes silent load failures
-    // visible without flooding Console every block.
-    if (!namEngines[idxA].isLoaded() && !loggedMissingZone[idxA])
-    {
-        juce::Logger::writeToLog("ZoneBlender: zone " + juce::String(zoneA) + " NAM not loaded — passthrough");
-        loggedMissingZone[idxA] = true;
-    }
 
     // NAM is mono: process channel 0 only, then replicate to other channels.
     float* ch0 = buffer.getWritePointer(0);

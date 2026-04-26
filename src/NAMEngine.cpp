@@ -30,13 +30,22 @@ bool NAMEngine::loadModel(const void* data, size_t dataSize)
 
         model = std::move(newModel);
         modelSampleRate = nam::get_sample_rate_from_nam_file(config);
-        model->prewarm();
-        recomputeLoudnessGain();
+        loudnessGainComputed = false;
+        loudnessGain = 1.0f;
+        // Defer prewarm/Reset and loudness measurement to prepare(), where the
+        // host's real sample rate and block size are known. Doing them here
+        // would force NAM to allocate scratch for a guessed block size and
+        // measure loudness at a SR that may not match playback.
         return true;
     }
     catch (const std::exception& e)
     {
         juce::Logger::writeToLog(juce::String("NAMEngine::loadModel failed: ") + e.what());
+        return false;
+    }
+    catch (...)
+    {
+        juce::Logger::writeToLog("NAMEngine::loadModel failed: unknown exception");
         return false;
     }
 }
@@ -53,13 +62,18 @@ bool NAMEngine::loadModelFromFile(const juce::String& filePath)
         }
 
         model = std::move(newModel);
-        model->prewarm();
-        recomputeLoudnessGain();
+        loudnessGainComputed = false;
+        loudnessGain = 1.0f;
         return true;
     }
     catch (const std::exception& e)
     {
         juce::Logger::writeToLog(juce::String("NAMEngine::loadModelFromFile failed: ") + e.what());
+        return false;
+    }
+    catch (...)
+    {
+        juce::Logger::writeToLog("NAMEngine::loadModelFromFile failed: unknown exception");
         return false;
     }
 }
@@ -109,25 +123,19 @@ double NAMEngine::measureLoudnessDb()
     // far better than a single sine, so it engages a clean amp's tone
     // shaping AND a high-gain amp's saturation. Result: cross-architecture
     // consistency.
-    constexpr double sampleRate = 48000.0;
-    constexpr int    blockSize  = 512;
-    constexpr int    numBlocks  = 48;          // ~0.5 seconds total
-    constexpr int    warmBlocks = 24;          // first half discarded
+    //
+    // We use the host's actual sample rate and block size (set in prepare),
+    // so the measurement is taken at the same operating point as playback.
+    const double sampleRate = currentSampleRate;
+    const int    blockSize  = currentBlockSize;
+    const int    numBlocks  = juce::jmax(1, static_cast<int>(0.5 * sampleRate / blockSize));
+    const int    warmBlocks = numBlocks / 2;
     constexpr double refRmsDb   = -18.0;
 
     const float targetRms = static_cast<float>(std::pow(10.0, refRmsDb / 20.0));
 
-    // Tell the model the buffer size we'll use; some architectures allocate
-    // internal scratch lazily and crash if process() outruns Reset.
-    try
-    {
-        model->Reset(sampleRate, blockSize);
-    }
-    catch (const std::exception& e)
-    {
-        juce::Logger::writeToLog(juce::String("NAMEngine::measureLoudnessDb: Reset threw: ") + e.what());
-        return kTargetLoudnessDb;
-    }
+    // The model has already been Reset() and prewarm()-ed by prepare() at
+    // the same SR/block size, so we don't need to Reset here.
 
     // Pre-generate the full pink-noise buffer once (deterministic seed) and
     // pre-scale it to the target RMS, so per-block processing only loops.
@@ -216,8 +224,34 @@ void NAMEngine::prepare(double sampleRate, int samplesPerBlock)
     currentSampleRate = sampleRate;
     currentBlockSize = samplesPerBlock;
 
-    if (model)
+    if (model == nullptr)
+        return;
+
+    // Reset reallocates the model's internal scratch buffers for the host's
+    // block size. Without this, calling process() with a larger block than
+    // the model was prepared for can read past internal buffers (crash on
+    // WaveNet) or produce garbage.
+    try
+    {
+        model->Reset(sampleRate, samplesPerBlock);
         model->prewarm();
+    }
+    catch (const std::exception& e)
+    {
+        juce::Logger::writeToLog(juce::String("NAMEngine::prepare: Reset/prewarm threw: ") + e.what());
+        return;
+    }
+    catch (...)
+    {
+        juce::Logger::writeToLog("NAMEngine::prepare: Reset/prewarm threw unknown exception");
+        return;
+    }
+
+    if (!loudnessGainComputed)
+    {
+        recomputeLoudnessGain();
+        loudnessGainComputed = true;
+    }
 }
 
 void NAMEngine::process(float* buffer, int numSamples)
@@ -248,4 +282,5 @@ void NAMEngine::reset()
     model.reset();
     modelSampleRate = -1.0;
     loudnessGain = 1.0f;
+    loudnessGainComputed = false;
 }
