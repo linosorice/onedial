@@ -6,13 +6,15 @@
 
 <p align="center">
   <strong>One knob. Five amps. Zero friction.</strong><br>
-  A neural amp modeler plugin for macOS with a single rotary control.
+  A neural amp modeler plugin for macOS, Windows and Linux with a single rotary control.
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/macOS-12%2B-black?style=flat-square&logo=apple" alt="macOS 12+">
-  <img src="https://img.shields.io/badge/format-Audio%20Unit-blue?style=flat-square" alt="Audio Unit">
-  <img src="https://img.shields.io/badge/C%2B%2B-17-orange?style=flat-square&logo=cplusplus" alt="C++17">
+  <img src="https://img.shields.io/badge/Windows-10%2B-blue?style=flat-square&logo=windows" alt="Windows 10+">
+  <img src="https://img.shields.io/badge/Linux-x86__64-yellow?style=flat-square&logo=linux" alt="Linux x86_64">
+  <img src="https://img.shields.io/badge/format-AU%20%C2%B7%20VST3%20%C2%B7%20Standalone-blue?style=flat-square" alt="AU · VST3 · Standalone">
+  <img src="https://img.shields.io/badge/C%2B%2B-20-orange?style=flat-square&logo=cplusplus" alt="C++20">
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License">
 </p>
 
@@ -56,21 +58,35 @@ Guitar In → Noise Gate → [NAM Zone A ⟷ NAM Zone B] → IR Cabinet → Outp
 
 ## Download
 
-Grab the latest pre-built plugin from the [Releases page](https://github.com/tondo-audio/timbro/releases/latest):
+Grab the latest pre-built plugin from the [Releases page](https://github.com/tondo-audio/timbro/releases/latest).
 
-1. Download `Timbro-vX.Y.Z-macOS.zip` and unzip it.
-2. Move `Timbro.component` to `~/Library/Audio/Plug-Ins/Components/`.
-3. **Logic Pro / GarageBand** — allow unsigned Audio Units (one-time):
+### macOS
+
+1. Download `Timbro-vX.Y.Z-macOS-AU.zip` (Logic Pro / GarageBand) or `Timbro-vX.Y.Z-macOS-VST3.zip` (REAPER / other VST3 hosts) and unzip it.
+2. Move `Timbro.component` to `~/Library/Audio/Plug-Ins/Components/`, or `Timbro.vst3` to `~/Library/Audio/Plug-Ins/VST3/`.
+3. **Logic Pro / GarageBand (AU)** — allow unsigned Audio Units (one-time):
    ```bash
    defaults write com.apple.Logic10 DoNotValidateAudioUnits -bool YES
    ```
 4. Restart your DAW. Timbro appears under **Tondo Audio**.
 
-> Timbro ships unsigned, so it loads only in hosts that allow unsigned AUs (Logic Pro and GarageBand with the flag above). DAWs that enforce strict AU validation will reject it.
+### Windows
+
+1. Download `Timbro-vX.Y.Z-Windows.zip` and unzip it.
+2. Copy `Timbro.vst3` to `C:\Program Files\Common Files\VST3\`.
+3. `Timbro.exe` is the standalone build — runnable directly.
+
+### Linux
+
+1. Download `Timbro-vX.Y.Z-Linux.zip` and unzip it.
+2. Copy `Timbro.vst3` to `~/.vst3/` (user) or `/usr/lib/vst3/` (system-wide).
+3. `Timbro` is the standalone build (requires ALSA or JACK at runtime).
+
+> Timbro ships unsigned. On macOS it loads only in hosts that accept unsigned plugins (Logic Pro and GarageBand with the flag above, REAPER for VST3). On Windows, SmartScreen may ask for manual confirmation on first launch of `Timbro.exe`.
 
 ## Build from source
 
-> Requires macOS 12+, CMake 3.22+, and a C++17 compiler.
+> Requires CMake 3.22+, a C++20 compiler, and one of: macOS 12+, Windows 10+ (x64) with MSVC, or Linux x86_64 (with `libasound2-dev`, `libjack-jackd2-dev`, `libcurl4-openssl-dev`, `libfreetype-dev`, `libx11-dev`, `libxcomposite-dev`, `libxcursor-dev`, `libxext-dev`, `libxinerama-dev`, `libxrandr-dev`, `libxrender-dev`, `libwebkit2gtk-4.1-dev`, `libglu1-mesa-dev`, `mesa-common-dev`).
 
 ```bash
 # Configure & build
@@ -78,7 +94,15 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 ```
 
-The AU plugin is automatically installed to `~/Library/Audio/Plug-Ins/Components/Timbro.component`. Same unsigned-AU caveat as above — set the `DoNotValidateAudioUnits` flag for Logic.
+After build, JUCE auto-installs the artefacts to the user-level plugin folder:
+
+| Platform | AU | VST3 | Standalone |
+|---|---|---|---|
+| macOS | `~/Library/Audio/Plug-Ins/Components/Timbro.component` | `~/Library/Audio/Plug-Ins/VST3/Timbro.vst3` | `build/Timbro_artefacts/Release/Standalone/Timbro` |
+| Windows | — | `%COMMONPROGRAMFILES%\VST3\Timbro.vst3` | `build/Timbro_artefacts/Release/Standalone/Timbro.exe` |
+| Linux | — | `~/.vst3/Timbro.vst3` | `build/Timbro_artefacts/Release/Standalone/Timbro` |
+
+On macOS, set `DoNotValidateAudioUnits` for Logic Pro / GarageBand to load the unsigned AU (see the Download section above).
 
 ## Verify the build
 
@@ -99,7 +123,7 @@ WARM           2.0    0.019315   -34.28
 PASS: dial sweep distinct + midpoints within 4 dB
 ```
 
-You can also run Apple's AU validator:
+On macOS you can also run Apple's AU validator:
 
 ```bash
 auval -v aufx Tmb1 TmbR
