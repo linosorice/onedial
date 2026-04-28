@@ -144,7 +144,11 @@ target_link_libraries(Timbro
 # does not touch curl, so this stays Linux-only.
 if(UNIX AND NOT APPLE)
     find_package(CURL REQUIRED)
-    target_link_libraries(Timbro PRIVATE CURL::libcurl)
+    # PUBLIC so the dependency reaches the per-format link targets
+    # (Timbro_VST3, Timbro_Standalone) — juce_core.cpp's curl references
+    # live in their object files via JUCE's INTERFACE_SOURCES propagation,
+    # so curl must be on their link line, not just the shared-code archive.
+    target_link_libraries(Timbro PUBLIC CURL::libcurl)
 endif()
 
 # Link NeuralAmpModelerCore.
