@@ -221,3 +221,9 @@ target_link_libraries(test_dial PRIVATE
     timbro_nam_core
     Timbro_Resources
 )
+
+# test_dial pulls in juce_core.cpp directly, so the same Linux libcurl
+# link applies here (see comment on the plugin target above).
+if(UNIX AND NOT APPLE)
+    target_link_libraries(test_dial PRIVATE CURL::libcurl)
+endif()
