@@ -6,8 +6,9 @@
 class Timbro;
 
 // =============================================================================
-// Asset-based LookAndFeel — every visible control is rendered by blitting a
-// frame of a pre-rendered Blender filmstrip on top of the panel image.
+// Flat, Surge XT-inspired LookAndFeel — drawn entirely with juce::Graphics.
+// VOICE is rendered slightly differently (zone tick marks on the ring) when
+// the slider's componentID is "voice".
 // =============================================================================
 class TimbroLookAndFeel : public juce::LookAndFeel_V4
 {
@@ -21,16 +22,31 @@ public:
     void drawToggleButton(juce::Graphics&, juce::ToggleButton&,
                           bool shouldDrawButtonAsHighlighted,
                           bool shouldDrawButtonAsDown) override;
-
-private:
-    juce::Image knobStrip;     // 128 vertical frames, square
-    juce::Image switchStrip;   // 2 vertical frames (UP/ON, DOWN/OFF)
 };
 
 
-// Strip of 5 vintage amber lamps above the VOICE knob. Each lamp's brightness
-// reflects how much of the corresponding zone is currently mixed in — at the
-// midpoint of a transition both adjacent lamps glow at half intensity.
+// Slider subclass that triggers a repaint on mouse enter/exit so the
+// LookAndFeel can render a hover state via juce::Slider::isMouseOver().
+class HoverableSlider : public juce::Slider
+{
+public:
+    using juce::Slider::Slider;
+    void mouseEnter(const juce::MouseEvent& e) override
+    {
+        juce::Slider::mouseEnter(e);
+        repaint();
+    }
+    void mouseExit(const juce::MouseEvent& e) override
+    {
+        juce::Slider::mouseExit(e);
+        repaint();
+    }
+};
+
+
+// 5 flat dots above the VOICE knob plus a dynamic zone-name label.
+// Dot brightness interpolates between two adjacent zones during a blend;
+// the label tracks the dominant zone.
 class ZoneIndicator : public juce::Component, private juce::Timer
 {
 public:
@@ -62,13 +78,16 @@ private:
     Timbro& processor;
     TimbroLookAndFeel lnf;
 
-    juce::Image panelImage;
-
-    // Four controls in a row: BYPASS toggle, INPUT knob, OUTPUT knob, VOICE knob
+    // Four controls: BYPASS toggle, INPUT/OUTPUT knobs, VOICE knob (bigger).
     juce::ToggleButton bypassButton{"BYPASS"};
-    juce::Slider inputKnob;
-    juce::Slider outputKnob;
-    juce::Slider voiceKnob;
+    HoverableSlider inputKnob;
+    HoverableSlider outputKnob;
+    HoverableSlider voiceKnob;
+
+    // Numeric readouts under INPUT and OUTPUT. VOICE uses the ZoneIndicator
+    // as its readout instead, so no separate label is needed there.
+    juce::Label inputValueLabel;
+    juce::Label outputValueLabel;
 
     ZoneIndicator zoneIndicator;
 

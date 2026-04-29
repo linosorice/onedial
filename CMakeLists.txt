@@ -1,5 +1,49 @@
 cmake_minimum_required(VERSION 3.22)
-project(Timbro VERSION 1.0.0 LANGUAGES C CXX)
+
+# --- Version derived from git ---
+# TIMBRO_VERSION:           strict X[.Y[.Z]] taken from the latest tag, used
+#                           for the project() VERSION (and therefore for
+#                           JucePlugin_VersionString / plugin metadata).
+# TIMBRO_DISPLAY_VERSION:   the full `git describe --tags --dirty` output
+#                           with a leading "v" stripped, exposed to the UI
+#                           via a compile definition. On a clean tagged
+#                           commit it equals the tag (e.g. "0.3.1"); on a
+#                           dev checkout it carries commit count + dirty
+#                           marker (e.g. "0.3.1-5-gabc123-dirty"), which
+#                           makes "is this a real release?" obvious at a
+#                           glance in the bottom-right of the editor.
+set(TIMBRO_VERSION "0.0.0")
+set(TIMBRO_DISPLAY_VERSION "dev")
+find_program(GIT_EXECUTABLE git)
+if(GIT_EXECUTABLE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=0
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        OUTPUT_VARIABLE GIT_LATEST_TAG
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+        RESULT_VARIABLE GIT_TAG_RESULT)
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} describe --tags --dirty --always
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        OUTPUT_VARIABLE GIT_DESCRIBE
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET)
+    if(GIT_LATEST_TAG)
+        # CMake's regex flavor lacks {n,m} repetition, so spell out the
+        # optional minor and patch components explicitly.
+        string(REGEX MATCH "[0-9]+(\\.[0-9]+)?(\\.[0-9]+)?" GIT_NUMERIC "${GIT_LATEST_TAG}")
+        if(GIT_NUMERIC)
+            set(TIMBRO_VERSION "${GIT_NUMERIC}")
+        endif()
+    endif()
+    if(GIT_DESCRIBE)
+        string(REGEX REPLACE "^v" "" TIMBRO_DISPLAY_VERSION "${GIT_DESCRIBE}")
+    endif()
+endif()
+message(STATUS "Timbro version: ${TIMBRO_VERSION} (display: ${TIMBRO_DISPLAY_VERSION})")
+
+project(Timbro VERSION ${TIMBRO_VERSION} LANGUAGES C CXX)
 
 # C++20 is required because NAM's slimmable wavenet uses
 # std::atomic<std::shared_ptr<T>>, a C++20 addition. libc++/libstdc++
@@ -107,10 +151,11 @@ target_include_directories(Timbro PRIVATE
 file(GLOB NAM_PROFILES "${CMAKE_CURRENT_SOURCE_DIR}/resources/profiles/*.nam")
 file(GLOB IR_CABINETS "${CMAKE_CURRENT_SOURCE_DIR}/resources/cabinets/*.wav")
 file(GLOB UI_ASSETS "${CMAKE_CURRENT_SOURCE_DIR}/resources/ui/*.png")
+file(GLOB UI_FONTS "${CMAKE_CURRENT_SOURCE_DIR}/resources/fonts/*.ttf")
 
-if(NAM_PROFILES OR IR_CABINETS OR UI_ASSETS)
+if(NAM_PROFILES OR IR_CABINETS OR UI_ASSETS OR UI_FONTS)
     juce_add_binary_data(Timbro_Resources SOURCES
-        ${NAM_PROFILES} ${IR_CABINETS} ${UI_ASSETS})
+        ${NAM_PROFILES} ${IR_CABINETS} ${UI_ASSETS} ${UI_FONTS})
     target_link_libraries(Timbro PRIVATE Timbro_Resources)
 endif()
 
@@ -121,6 +166,7 @@ target_compile_definitions(Timbro PUBLIC
     JUCE_VST3_CAN_REPLACE_VST2=0
     JUCE_DISPLAY_SPLASH_SCREEN=0
     NAM_SAMPLE_FLOAT=1
+    TIMBRO_DISPLAY_VERSION="${TIMBRO_DISPLAY_VERSION}"
 )
 
 # --- Link Libraries ---

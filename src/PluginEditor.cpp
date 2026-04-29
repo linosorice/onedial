@@ -8,71 +8,79 @@
 
 namespace
 {
-    // Layout — must match the asset pipeline (compose_panel.py / preview_mockup.py)
+    // ---- Layout (window 720x280) ------------------------------------------
     constexpr int kWindowW       = 720;
     constexpr int kWindowH       = 280;
-    constexpr int kCtrlDiameter  = 156;
-    constexpr int kCtrlRowCY     = 148;
+
+    // VOICE is the heart of Timbro — bigger than the trim controls to
+    // establish visual hierarchy (the eye lands here first).
+    constexpr int kKnobDiameter      = 95;
+    constexpr int kVoiceKnobDiameter = 140;
+    constexpr int kBypassW           = 80;
+    constexpr int kBypassH           = 40;
+
+    constexpr int kCtrlRowCY     = 160;
     constexpr int kBypassCX      = 105;
     constexpr int kInputCX       = 275;
     constexpr int kOutputCX      = 445;
     constexpr int kVoiceCX       = 615;
 
-    // Zone indicator strip — sits in the dead space above the VOICE knob, fully
-    // clear of both the title baseline and the visible knob graphic.
-    constexpr int kZoneStripW    = 92;
-    constexpr int kZoneStripH    = 18;
-    constexpr int kZoneStripY    = 72;
+    constexpr int kTitleY        = 12;
+    constexpr int kTitleH        = 28;
+    constexpr int kDividerY      = 50;
+    constexpr int kLabelTopY     = 64;
+    constexpr int kLabelH        = 16;
 
-    constexpr int kKnobFrameCount = 128;
-    constexpr int kSwitchFrameCount = 2;
+    constexpr int kValueReadoutY = 218;
+    constexpr int kValueReadoutH = 14;
 
-    juce::Rectangle<int> ctrlBounds(int cx)
+    constexpr int kZoneStripW    = 130;
+    constexpr int kZoneStripY    = 240;
+    constexpr int kZoneStripH    = 36;
+
+    // ---- Palette: warm-dark, Surge-inspired -------------------------------
+    const juce::Colour kBgColour       (0xff1a1612);
+    const juce::Colour kPanelDivider   (0xff3a3530);
+    const juce::Colour kKnobTrack      (0xff2f2924);
+    const juce::Colour kKnobTrackHover (0xff453d36);
+    const juce::Colour kKnobInner      (0xff241f1a);
+    const juce::Colour kKnobInnerEdge  (0xff3a3530);
+    const juce::Colour kAccent         (0xffd97742);
+    const juce::Colour kLabelColour    (0xffa89c8a);
+    const juce::Colour kTitleColour    (0xffede0c8);
+    const juce::Colour kIndicator      (0xffd9ccb8);
+
+    juce::Rectangle<int> knobBounds(int cx, int diameter)
     {
-        return { cx - kCtrlDiameter / 2,
-                 kCtrlRowCY - kCtrlDiameter / 2,
-                 kCtrlDiameter, kCtrlDiameter };
+        return { cx - diameter / 2,
+                 kCtrlRowCY - diameter / 2,
+                 diameter, diameter };
     }
 
-    void drawLamp(juce::Graphics& g, float cx, float cy, float radius, float brightness)
+    juce::Rectangle<int> bypassBounds(int cx)
     {
-        using juce::Colour;
-        using juce::ColourGradient;
+        return { cx - kBypassW / 2,
+                 kCtrlRowCY - kBypassH / 2,
+                 kBypassW, kBypassH };
+    }
 
-        if (brightness > 0.02f)
-        {
-            const float haloR = radius * (1.6f + 1.8f * brightness);
-            ColourGradient halo(Colour::fromFloatRGBA(1.0f, 0.45f, 0.15f, 0.55f * brightness),
-                                cx, cy,
-                                Colour::fromFloatRGBA(1.0f, 0.45f, 0.15f, 0.0f),
-                                cx + haloR, cy, true);
-            g.setGradientFill(halo);
-            g.fillEllipse(cx - haloR, cy - haloR, haloR * 2.0f, haloR * 2.0f);
-        }
+    juce::Typeface::Ptr getInterBoldTypeface()
+    {
+        // Loaded once on first use and cached for the lifetime of the app.
+        // All UI text in the editor routes through this face for cross-platform
+        // typographic consistency.
+        static auto tf = juce::Typeface::createSystemTypefaceFor(
+            BinaryData::InterBold_ttf, BinaryData::InterBold_ttfSize);
+        return tf;
+    }
 
-        // Dark socket bezel
-        g.setColour(Colour(0xff0a0604));
-        g.fillEllipse(cx - radius - 1.4f, cy - radius - 1.4f,
-                      (radius + 1.4f) * 2.0f, (radius + 1.4f) * 2.0f);
-
-        // Dome — interpolate from dim base to a warm amber-red
-        const Colour off  = Colour(0xff331410);
-        const Colour on   = Colour::fromFloatRGBA(1.0f, 0.55f, 0.22f, 1.0f);
-        const Colour body = off.interpolatedWith(on, brightness);
-
-        ColourGradient dome(body.brighter(0.4f * brightness),
-                            cx - radius * 0.35f, cy - radius * 0.35f,
-                            body.darker(0.6f),
-                            cx + radius, cy + radius, true);
-        g.setGradientFill(dome);
-        g.fillEllipse(cx - radius, cy - radius, radius * 2.0f, radius * 2.0f);
-
-        // Specular pinpoint
-        g.setColour(Colour::fromFloatRGBA(1.0f, 1.0f, 0.92f, 0.20f + 0.40f * brightness));
-        const float specR = radius * 0.32f;
-        g.fillEllipse(cx - radius * 0.42f - specR,
-                      cy - radius * 0.42f - specR,
-                      specR * 2.0f, specR * 2.0f);
+    juce::Font makeUiFont(float height, float kerning = 0.0f)
+    {
+        auto f = juce::Font(juce::FontOptions().withTypeface(getInterBoldTypeface())
+                                                .withHeight(height));
+        if (kerning > 0.0f)
+            f.setExtraKerningFactor(kerning);
+        return f;
     }
 }
 
@@ -82,52 +90,120 @@ namespace
 
 TimbroLookAndFeel::TimbroLookAndFeel()
 {
-    knobStrip   = juce::ImageCache::getFromMemory(BinaryData::knob_filmstrip_png,
-                                                    BinaryData::knob_filmstrip_pngSize);
-    switchStrip = juce::ImageCache::getFromMemory(BinaryData::switch_strip_png,
-                                                    BinaryData::switch_strip_pngSize);
-
-    setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xFFEDE0C8));
-    setColour(juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
-    setColour(juce::ToggleButton::textColourId, juce::Colours::transparentBlack);
-    setColour(juce::ToggleButton::tickColourId, juce::Colours::transparentBlack);
+    setColour(juce::Slider::textBoxTextColourId,        kLabelColour);
+    setColour(juce::Slider::textBoxOutlineColourId,     juce::Colours::transparentBlack);
+    setColour(juce::ToggleButton::textColourId,         juce::Colours::transparentBlack);
+    setColour(juce::ToggleButton::tickColourId,         juce::Colours::transparentBlack);
     setColour(juce::ToggleButton::tickDisabledColourId, juce::Colours::transparentBlack);
 }
 
-void TimbroLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
-                                          float sliderPos, float, float, juce::Slider&)
+void TimbroLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int w, int h,
+                                          float sliderPos, float startAngle, float endAngle,
+                                          juce::Slider& slider)
 {
-    if (! knobStrip.isValid())
-        return;
+    auto bounds = juce::Rectangle<int>(x, y, w, h).toFloat().reduced(2.0f);
+    const auto centre = bounds.getCentre();
 
-    const int frameSize = knobStrip.getWidth();
-    const int frame = juce::jlimit(0, kKnobFrameCount - 1,
-                                    (int) std::round(sliderPos * (kKnobFrameCount - 1)));
+    const float radius        = std::min(bounds.getWidth(), bounds.getHeight()) * 0.5f;
+    const float ringThickness = 4.0f;
+    const float ringRadius    = radius - ringThickness * 0.5f;
+    const float innerRadius   = radius - 12.0f;
 
-    g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
-    g.drawImage(knobStrip,
-                x, y, width, height,
-                0, frame * frameSize, frameSize, frameSize);
+    // Hover stays true throughout a drag, even when the cursor leaves the
+    // slider's bounds — without this the highlight flickers off mid-gesture.
+    const bool hovered = slider.isMouseOver(true) || slider.isMouseButtonDown(true);
+    const bool isVoice = slider.getComponentID() == "voice";
+
+    // Track arc (full sweep, dim — slightly brighter on hover)
+    juce::Path trackArc;
+    trackArc.addCentredArc(centre.x, centre.y, ringRadius, ringRadius,
+                           0.0f, startAngle, endAngle, true);
+    g.setColour(hovered ? kKnobTrackHover : kKnobTrack);
+    g.strokePath(trackArc, juce::PathStrokeType(ringThickness,
+                                                 juce::PathStrokeType::curved,
+                                                 juce::PathStrokeType::butt));
+
+    // Value arc (start → current, accent)
+    const float valueAngle = startAngle + sliderPos * (endAngle - startAngle);
+    juce::Path valueArc;
+    valueArc.addCentredArc(centre.x, centre.y, ringRadius, ringRadius,
+                           0.0f, startAngle, valueAngle, true);
+    g.setColour(hovered ? kAccent.brighter(0.10f) : kAccent);
+    g.strokePath(valueArc, juce::PathStrokeType(ringThickness,
+                                                 juce::PathStrokeType::curved,
+                                                 juce::PathStrokeType::butt));
+
+    // Zone notches: cut bg-coloured slits across the ring at the boundaries
+    // between zones (dial values 2/4/6/8 → fractions 0.2/0.4/0.6/0.8).
+    // Drawn after the value arc so they remain visible whether the segment
+    // is active (amber) or inactive (track-grey).
+    if (isVoice)
+    {
+        g.setColour(kBgColour);
+        const float notchInner = ringRadius - ringThickness * 0.5f - 1.0f;
+        const float notchOuter = ringRadius + ringThickness * 0.5f + 1.0f;
+        for (float frac : { 0.2f, 0.4f, 0.6f, 0.8f })
+        {
+            const float a = startAngle + frac * (endAngle - startAngle);
+            juce::Path t;
+            t.startNewSubPath(0.0f, -notchInner);
+            t.lineTo(0.0f, -notchOuter);
+            t.applyTransform(juce::AffineTransform::rotation(a)
+                                 .translated(centre.x, centre.y));
+            g.strokePath(t, juce::PathStrokeType(2.0f));
+        }
+    }
+
+    // Inner disc
+    g.setColour(hovered ? kKnobInner.brighter(0.08f) : kKnobInner);
+    g.fillEllipse(centre.x - innerRadius, centre.y - innerRadius,
+                  innerRadius * 2.0f, innerRadius * 2.0f);
+    g.setColour(kKnobInnerEdge);
+    g.drawEllipse(centre.x - innerRadius, centre.y - innerRadius,
+                  innerRadius * 2.0f, innerRadius * 2.0f, 1.0f);
+
+    // Indicator tick
+    juce::Path tick;
+    const float tickStart = innerRadius * 0.30f;
+    const float tickEnd   = innerRadius * 0.92f;
+    tick.startNewSubPath(0.0f, -tickStart);
+    tick.lineTo(0.0f, -tickEnd);
+    tick.applyTransform(juce::AffineTransform::rotation(valueAngle)
+                            .translated(centre.x, centre.y));
+    g.setColour(kIndicator);
+    g.strokePath(tick, juce::PathStrokeType(2.5f,
+                                             juce::PathStrokeType::curved,
+                                             juce::PathStrokeType::rounded));
 }
 
 void TimbroLookAndFeel::drawToggleButton(juce::Graphics& g, juce::ToggleButton& button,
-                                          bool /*shouldDrawAsHighlighted*/,
-                                          bool /*shouldDrawAsDown*/)
+                                          bool /*highlighted*/,
+                                          bool /*down*/)
 {
-    if (! switchStrip.isValid())
-        return;
+    auto bounds = button.getLocalBounds().toFloat().reduced(2.0f);
+    const float corner = bounds.getHeight() * 0.5f;
 
-    const int frameSize = switchStrip.getWidth();
-    // toggleState == true  → bypass engaged → DOWN frame (LED off)
-    // toggleState == false → signal active  → UP   frame (LED on)
-    const int frame = button.getToggleState() ? 1 : 0;
+    const bool bypassed = button.getToggleState();
+    const bool hovered  = button.isMouseOver(true);
 
-    auto bounds = button.getLocalBounds();
-    g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
-    g.drawImage(switchStrip,
-                bounds.getX(), bounds.getY(),
-                bounds.getWidth(), bounds.getHeight(),
-                0, frame * frameSize, frameSize, frameSize);
+    if (! bypassed)
+    {
+        g.setColour(hovered ? kAccent.brighter(0.10f) : kAccent);
+        g.fillRoundedRectangle(bounds, corner);
+        g.setColour(kBgColour);
+        g.setFont(makeUiFont(11.0f, 0.10f));
+        g.drawText("ON", bounds, juce::Justification::centred);
+    }
+    else
+    {
+        g.setColour(hovered ? kKnobTrackHover : kKnobTrack);
+        g.fillRoundedRectangle(bounds, corner);
+        g.setColour(kPanelDivider);
+        g.drawRoundedRectangle(bounds, corner, 1.0f);
+        g.setColour(kLabelColour);
+        g.setFont(makeUiFont(11.0f, 0.10f));
+        g.drawText("OFF", bounds, juce::Justification::centred);
+    }
 }
 
 
@@ -166,22 +242,35 @@ void ZoneIndicator::paint(juce::Graphics& g)
     ZoneBlender::getZoneBlend(lastDialValue, zoneA, zoneB, blend);
 
     std::array<float, 5> brightness{};
-    brightness.fill(0.0f);
     if (zoneA >= 0 && zoneA < 5)
         brightness[(size_t) zoneA] = 1.0f - blend;
     if (zoneB != zoneA && zoneB >= 0 && zoneB < 5)
         brightness[(size_t) zoneB] = blend;
 
     auto bounds = getLocalBounds().toFloat();
-    const float ledRadius = 3.6f;
-    const float spacing = bounds.getWidth() / 5.0f;
-    const float cy = bounds.getCentreY();
+
+    auto dotsArea = bounds.removeFromTop(14.0f);
+    const float dotRadius = 3.0f;
+    const float spacing = dotsArea.getWidth() / 5.0f;
+    const float dotsCY = dotsArea.getCentreY();
 
     for (int i = 0; i < 5; ++i)
     {
-        const float cx = bounds.getX() + spacing * ((float) i + 0.5f);
-        drawLamp(g, cx, cy, ledRadius, brightness[(size_t) i]);
+        const float cx = dotsArea.getX() + spacing * ((float) i + 0.5f);
+        const float b = brightness[(size_t) i];
+        const auto col = kKnobTrack.interpolatedWith(kAccent, b);
+        g.setColour(col);
+        g.fillEllipse(cx - dotRadius, dotsCY - dotRadius,
+                      dotRadius * 2.0f, dotRadius * 2.0f);
     }
+
+    bounds.removeFromTop(4.0f);
+    const int dominant = (blend < 0.5f) ? zoneA : zoneB;
+    const char* name = (dominant >= 0 && dominant < 5) ? kZones[(size_t) dominant].name : "";
+
+    g.setFont(makeUiFont(12.0f, 0.10f));
+    g.setColour(kAccent);
+    g.drawText(name, bounds, juce::Justification::centredTop);
 }
 
 
@@ -197,10 +286,7 @@ TimbroEditor::TimbroEditor(Timbro& p)
     setSize(kWindowW, kWindowH);
     setLookAndFeel(&lnf);
 
-    panelImage = juce::ImageCache::getFromMemory(BinaryData::panel_png,
-                                                   BinaryData::panel_pngSize);
-
-    auto configureKnob = [this](juce::Slider& k)
+    auto configureKnob = [this](HoverableSlider& k)
     {
         k.setSliderStyle(juce::Slider::RotaryVerticalDrag);
         k.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
@@ -210,9 +296,35 @@ TimbroEditor::TimbroEditor(Timbro& p)
     configureKnob(inputKnob);
     configureKnob(outputKnob);
     configureKnob(voiceKnob);
+    voiceKnob.setComponentID("voice");
 
     bypassButton.setClickingTogglesState(true);
     addAndMakeVisible(bypassButton);
+
+    auto configureValueLabel = [this](juce::Label& l)
+    {
+        l.setFont(makeUiFont(10.0f, 0.05f));
+        l.setColour(juce::Label::textColourId, kIndicator.withAlpha(0.85f));
+        l.setColour(juce::Label::backgroundColourId, juce::Colours::transparentBlack);
+        l.setJustificationType(juce::Justification::centred);
+        l.setInterceptsMouseClicks(false, false);
+        addAndMakeVisible(l);
+    };
+
+    configureValueLabel(inputValueLabel);
+    configureValueLabel(outputValueLabel);
+
+    auto formatDb = [](double v) -> juce::String
+    {
+        return (v >= 0.0 ? "+" : "") + juce::String(v, 1) + " dB";
+    };
+
+    inputKnob.onValueChange = [this, formatDb] {
+        inputValueLabel.setText(formatDb(inputKnob.getValue()), juce::dontSendNotification);
+    };
+    outputKnob.onValueChange = [this, formatDb] {
+        outputValueLabel.setText(formatDb(outputKnob.getValue()), juce::dontSendNotification);
+    };
 
     addAndMakeVisible(zoneIndicator);
 
@@ -221,6 +333,10 @@ TimbroEditor::TimbroEditor(Timbro& p)
     outputAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(apvts, "outputGain", outputKnob);
     voiceAttachment  = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(apvts, "dial", voiceKnob);
     bypassAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(apvts, "bypass", bypassButton);
+
+    // Initial readout sync (attachments fire onValueChange after this).
+    inputKnob.onValueChange();
+    outputKnob.onValueChange();
 }
 
 TimbroEditor::~TimbroEditor()
@@ -230,24 +346,53 @@ TimbroEditor::~TimbroEditor()
 
 void TimbroEditor::paint(juce::Graphics& g)
 {
-    if (panelImage.isValid())
+    g.fillAll(kBgColour);
+
+    g.setColour(kTitleColour);
+    g.setFont(makeUiFont(22.0f, 0.18f));
+    g.drawText("TIMBRO",
+               juce::Rectangle<int>(0, kTitleY, kWindowW, kTitleH),
+               juce::Justification::centred);
+
+    g.setColour(kPanelDivider);
+    g.fillRect(juce::Rectangle<float>(60.0f, (float) kDividerY,
+                                       (float) (kWindowW - 120), 1.0f));
+
+    g.setColour(kLabelColour);
+    g.setFont(makeUiFont(11.0f, 0.12f));
+
+    const std::array<std::pair<int, const char*>, 4> labels = {{
+        { kBypassCX, "BYPASS" },
+        { kInputCX,  "INPUT"  },
+        { kOutputCX, "OUTPUT" },
+        { kVoiceCX,  "VOICE"  }
+    }};
+
+    for (auto& [cx, name] : labels)
     {
-        g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
-        g.drawImage(panelImage, getLocalBounds().toFloat(),
-                    juce::RectanglePlacement::stretchToFit);
+        juce::Rectangle<int> r(cx - 60, kLabelTopY, 120, kLabelH);
+        g.drawText(name, r, juce::Justification::centred);
     }
-    else
-    {
-        g.fillAll(juce::Colour(0xFF1C1410));
-    }
+
+    // Version stamp, bottom-right. The macro is injected by CMake from
+    // `git describe --tags --dirty`; nothing in the UI needs to be touched
+    // when a new tag is cut.
+    g.setColour(kPanelDivider.brighter(0.05f));
+    g.setFont(makeUiFont(9.0f, 0.05f));
+    g.drawText("v" TIMBRO_DISPLAY_VERSION,
+               juce::Rectangle<int>(kWindowW - 160, kWindowH - 18, 150, 14),
+               juce::Justification::centredRight);
 }
 
 void TimbroEditor::resized()
 {
-    bypassButton.setBounds(ctrlBounds(kBypassCX));
-    inputKnob   .setBounds(ctrlBounds(kInputCX));
-    outputKnob  .setBounds(ctrlBounds(kOutputCX));
-    voiceKnob   .setBounds(ctrlBounds(kVoiceCX));
+    bypassButton.setBounds(bypassBounds(kBypassCX));
+    inputKnob   .setBounds(knobBounds(kInputCX,  kKnobDiameter));
+    outputKnob  .setBounds(knobBounds(kOutputCX, kKnobDiameter));
+    voiceKnob   .setBounds(knobBounds(kVoiceCX,  kVoiceKnobDiameter));
+
+    inputValueLabel .setBounds(kInputCX  - 60, kValueReadoutY, 120, kValueReadoutH);
+    outputValueLabel.setBounds(kOutputCX - 60, kValueReadoutY, 120, kValueReadoutH);
 
     zoneIndicator.setBounds(kVoiceCX - kZoneStripW / 2,
                             kZoneStripY,
